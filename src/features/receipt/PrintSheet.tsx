@@ -80,7 +80,7 @@ export function PrintSheet({
           </dd>
           <dt>{t('print.passport')}</dt>
           <dd dir="ltr" translate="no">
-            {maskPassport(session.student.passportNumber)}
+            {maskPassport(session.student.passportLast4)}
           </dd>
           <dt>{t('print.signedOn')}</dt>
           <dd>{formatDateTime(receipt.receivedAt, locale)}</dd>

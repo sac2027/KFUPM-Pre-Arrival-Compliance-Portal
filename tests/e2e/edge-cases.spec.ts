@@ -1,29 +1,35 @@
 /** Production build: environment and input edge cases from the break-ui catalogue. */
 import { expect, test } from '@playwright/test';
-import { clipped, confirmAllTerms, drawSignature, fillLogin, L, makePng, overflow } from './helpers';
+import { clipped, confirmAllTerms, drawSignature, fillLogin, L, makePng, overflow, settleReceipt } from './helpers';
 import type { Locale } from './helpers';
+import { byLocale, STUDENTS } from './students';
 
 const open = async (page: import('@playwright/test').Page, locale: Locale) => {
   await page.addInitScript((l) => localStorage.setItem('pacf.locale', l), locale);
   await page.goto('/');
   await page.evaluate(() => document.fonts.ready);
 };
-const GOOD = { passport: 'N1234567', phone: '+966551234567' };
+const GOOD = STUDENTS.mai;
 
 test.describe('names that real students have', () => {
-  test('a Persian name keeps its zero-width non-joiner all the way to the declaration', async ({ page }) => {
-    const ZWNJ = String.fromCharCode(0x200c);
-    const name = 'نامه' + ZWNJ + 'ای احمدی';
-    await open(page, 'ar');
-    await fillLogin(page, 'ar', { ...GOOD, name });
+  test('the declaration shows the name as KFUPM holds it, however the student typed it', async ({ page }) => {
+    await open(page, 'en');
+    await fillLogin(page, 'en', { ...STUDENTS.mai, name: '  mai   NGUYEN ' }); // roster: Nguyen Thi Mai
     await expect(page.locator('#terms-heading')).toBeFocused();
-    expect(await page.locator('.declarant dd').first().textContent()).toBe(name);
+    expect(await page.locator('.declarant dd').first().textContent()).toBe('Nguyen Thi Mai');
   });
 
-  test('a transliterated Chinese name with middle dots is accepted', async ({ page }) => {
+  test('a name in a different order still verifies (roster "Nguyen Thi Mai", typed "Mai Nguyễn")', async ({ page }) => {
+    await open(page, 'en');
+    await fillLogin(page, 'en', STUDENTS.mai);
+    await expect(page.locator('#terms-heading')).toBeFocused();
+  });
+
+  test('a transliterated name with middle dots passes the form and gets the generic answer from the server', async ({ page }) => {
     await open(page, 'en');
     await fillLogin(page, 'en', { ...GOOD, name: '阿卜杜拉·本·穆罕默德' });
-    await expect(page.locator('#terms-heading')).toBeFocused();
+    await expect(page.locator('#full-name-error')).toHaveCount(0); // the form accepted it
+    await expect(page.getByRole('alert')).toContainText('do not match our records'); // the roster did not
   });
 
   test('an emoji name is refused with a clear message instead of being mangled', async ({ page }) => {
@@ -32,12 +38,18 @@ test.describe('names that real students have', () => {
     await expect(page.locator('#full-name-error')).toContainText('2–100 letters');
     await expect(page.locator('#login-heading')).toBeVisible();
   });
+
+  test('a withdrawn student gets the same generic answer as a stranger', async ({ page }) => {
+    await open(page, 'en');
+    await fillLogin(page, 'en', STUDENTS.withdrawn);
+    await expect(page.getByRole('alert')).toContainText('do not match our records');
+  });
 });
 
 test.describe('uploaded signature images', () => {
   const toUpload = async (page: import('@playwright/test').Page) => {
     await open(page, 'en');
-    await fillLogin(page, 'en', { ...GOOD, name: 'Mai Nguyễn' });
+    await fillLogin(page, 'en', STUDENTS.mai);
     await confirmAllTerms(page, 'en');
     await page.getByRole('tab', { name: 'Upload' }).click();
   };
@@ -99,7 +111,7 @@ test.describe('environments', () => {
     expect(current).not.toBe(upcoming);
     for (const c of [current, upcoming]) expect(c).not.toBe('rgba(0, 0, 0, 0)');
 
-    await fillLogin(page, 'en', { ...GOOD, name: 'Mai Nguyễn' });
+    await fillLogin(page, 'en', STUDENTS.mai);
     await page.locator('.term').first().waitFor();
     const box = (i: number) => page.locator('.term__box').nth(i).evaluate((e) => getComputedStyle(e).backgroundColor);
     const before = await box(0);
@@ -126,13 +138,16 @@ test.describe('environments', () => {
   for (const locale of ['en', 'ar'] as const) {
     test(`text enlarged to 200%: every step still fits with nothing clipped (${locale})`, async ({ page }) => {
       await open(page, locale);
-      await page.addStyleTag({ content: 'html { font-size: 200% }' });
+      // Through the CSSOM (what a browser's text-size setting does); an injected <style> would be blocked by the site's own CSP.
+      await page.evaluate(() => {
+        document.documentElement.style.fontSize = '200%';
+      });
       const fits = async (where: string) => {
         expect(await overflow(page), `${where}: overflow`).toEqual({ overflow: 0, escapes: [] });
         expect(await clipped(page), `${where}: clipped`).toEqual([]);
       };
       await fits('login');
-      await fillLogin(page, locale, { ...GOOD, name: locale === 'en' ? 'Mai Nguyễn' : 'محمد عبدالله' });
+      await fillLogin(page, locale, byLocale(locale));
       await expect(page.locator('#terms-heading')).toBeFocused();
       await fits('terms');
       await confirmAllTerms(page, locale);
@@ -140,6 +155,7 @@ test.describe('environments', () => {
       await drawSignature(page);
       await page.getByRole('button', { name: L(locale).submit }).click();
       await expect(page.getByRole('heading', { level: 2, name: L(locale).heading })).toBeFocused({ timeout: 8000 });
+      await settleReceipt(page);
       await fits('receipt');
     });
   }

@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { fillLogin } from './helpers';
+import { byLocale } from './students';
 
 type Locale = 'en' | 'ar';
 const T = (l: Locale) => ({
@@ -17,10 +19,7 @@ async function toSign(page: Page, locale: Locale = 'en') {
   const s = T(locale);
   await page.addInitScript((l) => localStorage.setItem('pacf.locale', l), locale);
   await page.goto('/');
-  await page.getByLabel(s.passport).fill('N1234567');
-  await page.getByLabel(s.phone).fill('+966551234567');
-  await page.getByLabel(s.name).fill(locale === 'en' ? 'Mai Nguyễn' : 'محمد عبدالله');
-  await page.getByRole('button', { name: s.signin }).click();
+  await fillLogin(page, locale, byLocale(locale));
   await page.locator('.term').first().waitFor();
   for (let i = 0; i < 5; i++) await page.locator('.term').nth(i).locator('.term__title label').click();
   await page.getByRole('button', { name: s.cont }).click();

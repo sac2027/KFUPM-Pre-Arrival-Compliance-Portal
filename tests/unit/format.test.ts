@@ -26,9 +26,9 @@ describe('formatDate / formatDateTime (Gregorian, Latin digits, both languages)'
 });
 
 describe('maskPassport', () => {
-  it('keeps only the last four characters', () => {
+  it('shows only the last four characters, whether given the full number or just those four', () => {
     expect(maskPassport('N1234567')).toBe('••••4567');
-    expect(maskPassport('AB12')).toBe('AB12');
+    expect(maskPassport('4567')).toBe('••••4567');
     expect(maskPassport('')).toBe('');
   });
 });

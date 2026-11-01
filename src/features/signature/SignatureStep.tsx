@@ -14,10 +14,12 @@ const CLOSING = loadTerms().document.closing;
 export function SignatureStep({
   onBack,
   onSubmit,
+  onSessionExpired,
   processImage,
 }: {
   onBack: () => void;
   onSubmit: (signature: Signature) => Promise<void>;
+  onSessionExpired?: () => void;
   processImage?: (file: File) => Promise<string>;
 }) {
   const { t, locale, dir } = useI18n();
@@ -43,7 +45,11 @@ export function SignatureStep({
     setPending(true);
     setFailure(null);
     onSubmit({ method, dataUrl })
-      .catch((err: unknown) => setFailure(err instanceof ServiceError && err.code === 'network' ? 'error.network' : 'error.submit'))
+      .catch((err: unknown) => {
+        const code = err instanceof ServiceError ? err.code : 'network';
+        if (code === 'session_expired' && onSessionExpired) return onSessionExpired();
+        setFailure(code === 'network' ? 'error.network' : 'error.submit');
+      })
       .finally(() => {
         inFlight.current = false;
         setPending(false);

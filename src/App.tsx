@@ -43,7 +43,12 @@ function Shell() {
           </header>
           <p className="doc__intro">{doc.intro[locale]}</p>
           <StepPanel step={flow.step}>
-            {flow.step === 'login' && <LoginScreen onLoggedIn={(session) => dispatch({ type: 'loggedIn', session })} />}
+            {flow.step === 'login' && (
+              <LoginScreen
+                onLoggedIn={(session) => dispatch({ type: 'loggedIn', session })}
+                notice={flow.acceptedTermIds.length > 0 ? 'error.sessionExpired' : undefined}
+              />
+            )}
             {flow.step === 'terms' && flow.session && (
               <TermsStep
                 session={flow.session}
@@ -54,6 +59,7 @@ function Shell() {
             {flow.step === 'sign' && flow.session && (
               <SignatureStep
                 onBack={() => dispatch({ type: 'back' })}
+                onSessionExpired={() => dispatch({ type: 'sessionExpired' })}
                 onSubmit={async (signature) => {
                   const receipt = await dbService.submitCompliance({
                     session: flow.session!,
@@ -67,12 +73,14 @@ function Shell() {
                 }}
               />
             )}
-            {flow.step === 'done' && flow.session && flow.receipt && flow.signature && (
+            {flow.step === 'done' && flow.session && flow.receipt && flow.signature && flow.document && (
               <ReceiptScreen
                 session={flow.session}
                 acceptedTermIds={flow.acceptedTermIds}
                 signature={flow.signature}
                 receipt={flow.receipt}
+                document={flow.document}
+                onDocumentStatus={(status) => dispatch({ type: 'documentStatus', status })}
                 onFinish={() => {
                   void authService.logout();
                   dispatch({ type: 'reset' });

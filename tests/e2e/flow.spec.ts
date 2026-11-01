@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { fillLogin } from './helpers';
+import { byLocale } from './students';
 
 const open = async (page: Page, locale: 'en' | 'ar') => {
   await page.addInitScript((l) => localStorage.setItem('pacf.locale', l), locale);
@@ -7,13 +9,7 @@ const open = async (page: Page, locale: 'en' | 'ar') => {
   await page.evaluate(() => document.fonts.ready);
 };
 
-const login = async (page: Page, locale: 'en' | 'ar') => {
-  const L = locale === 'en';
-  await page.getByLabel(L ? 'Passport number' : 'رقم جواز السفر').fill('N1234567');
-  await page.getByLabel(L ? 'Phone number' : 'رقم الهاتف').fill('+966551234567');
-  await page.getByLabel(L ? 'Full name' : 'الاسم الكامل').fill(L ? 'Mai Nguyễn' : 'محمد عبدالله');
-  await page.getByRole('button', { name: L ? 'Sign in' : 'تسجيل الدخول' }).click();
-};
+const login = (page: Page, locale: 'en' | 'ar') => fillLogin(page, locale, byLocale(locale));
 
 /** Armed before the click: grabs the step's entrance transition on the frame it starts, then samples both ends. */
 const armCapture = (page: Page) =>

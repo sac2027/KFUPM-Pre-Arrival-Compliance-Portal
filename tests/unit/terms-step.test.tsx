@@ -12,8 +12,10 @@ import type { Session } from '../../src/services/types';
 const TERMS = loadTerms();
 const session: Session = {
   sessionId: 's-1',
-  student: { passportNumber: 'A1234567', phoneNumber: '+966551234567', fullName: 'Mai Nguyễn' },
+  student: { fullName: 'Mai Nguyễn', email: 'm•••@example.com', passportLast4: '4567' },
   issuedAt: '2026-11-01T10:00:00.000Z',
+  expiresAt: '2026-11-01T10:30:00.000Z',
+  token: 't',
 };
 
 function setup(locale: Locale = 'en', initialAccepted: TermId[] = [], who: Session = session) {

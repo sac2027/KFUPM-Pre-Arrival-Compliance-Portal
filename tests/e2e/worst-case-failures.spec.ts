@@ -3,9 +3,10 @@ import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { confirmAllTerms, drawSignature, fillLogin, L } from './helpers';
 import type { Locale } from './helpers';
+import { byLocale } from './students';
 
 const NETWORK: Record<Locale, RegExp> = { en: /Can’t reach the server/, ar: /تعذّر الاتصال بالخادم/ };
-const GOOD = (l: Locale) => ({ passport: 'N1234567', phone: '+966551234567', name: l === 'en' ? 'Mai Nguyễn' : 'محمد عبدالله' });
+const GOOD = (l: Locale) => byLocale(l);
 const inkPixels = (page: Page) =>
   page.evaluate(() => {
     const c = document.querySelector('canvas')!;

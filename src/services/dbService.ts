@@ -1,45 +1,40 @@
 /**
- * IT HAND-OFF: replace the exported `dbService` with a real POST to the KFUPM backend.
- * This file is a MOCK: it validates the payload, simulates latency and returns a receipt. Nothing is stored.
- * Contract notes for the real implementation:
- *  - Re-validate everything here on the server (especially the five-term rule and the signature type).
- *  - Encrypt passport/phone/name/signature at rest; never log the payload.
- *  - Return only `{ referenceNumber, receivedAt }`; do not echo PII back to the browser.
+ * Submissions: POST /api/submissions records the declaration for the student the session belongs to;
+ * PUT …/document stores the browser-rendered PDF and emails it; the other two read that same stored file.
+ * (functions/api/submissions/*). The server re-validates everything and decides whose record it is.
  */
-import { isWorstCase, shouldFailOnce, WORST_REFERENCE } from '../dev/worstCase';
-import { TERM_IDS } from '../lib/termsSchema';
-import { DEFAULT_LATENCY_MS, randomCode, simulate } from './mockUtils';
-import type { MockOptions } from './mockUtils';
+import { shouldFailOnce } from '../dev/worstCase';
+import { api } from './http';
 import { ServiceError } from './types';
-import type { DbService, SubmissionPayload, SubmissionReceipt } from './types';
+import type { DbService, DocumentStatus, SubmissionPayload, SubmissionReceipt } from './types';
 
-const SIGNATURE_DATA_URL = /^data:image\/(png|jpeg);base64,[A-Za-z0-9+/]+=*$/;
+const status = (r: { emailStatus: DocumentStatus['state']; emailTo: string }): DocumentStatus => ({ state: r.emailStatus, emailTo: r.emailTo });
 
-function assertValid(p: SubmissionPayload): void {
-  const ids = p.acceptedTermIds;
-  if (ids.length !== TERM_IDS.length || !TERM_IDS.every((id, i) => ids[i] === id)) {
-    throw new ServiceError('invalid_submission', 'All five terms must be accepted, in order.');
-  }
-  if (!SIGNATURE_DATA_URL.test(p.signature.dataUrl)) {
-    throw new ServiceError('invalid_submission', 'Signature must be a PNG or JPEG image.');
-  }
-}
-
-export function createMockDbService(opts: MockOptions = {}): DbService {
-  return {
-    submitCompliance(payload: SubmissionPayload): Promise<SubmissionReceipt> {
-      return simulate(opts, () => {
-        if (import.meta.env.DEV && shouldFailOnce('submit')) throw new ServiceError('network', 'dev: simulated outage');
-        assertValid(payload);
-        const receivedAt = new Date().toISOString();
-        return {
-          referenceNumber:
-            import.meta.env.DEV && isWorstCase() ? WORST_REFERENCE : `PACF-${receivedAt.slice(0, 4)}-${randomCode(6)}`,
-          receivedAt,
-        };
-      });
-    },
-  };
-}
-
-export const dbService: DbService = createMockDbService({ latencyMs: DEFAULT_LATENCY_MS });
+export const dbService: DbService = {
+  async submitCompliance(payload: SubmissionPayload): Promise<SubmissionReceipt> {
+    if (import.meta.env.DEV && shouldFailOnce('submit')) throw new ServiceError('network', 'dev: simulated outage');
+    const r = await api<{ id: string; referenceNumber: string; submittedAt: string }>('/api/submissions', {
+      method: 'POST',
+      token: payload.session.token,
+      body: JSON.stringify({ locale: payload.locale, acceptedTermIds: payload.acceptedTermIds, signature: payload.signature }),
+    });
+    return { id: r.id, referenceNumber: r.referenceNumber, receivedAt: r.submittedAt };
+  },
+  async uploadDocument(session, submissionId, pdf) {
+    if (import.meta.env.DEV && shouldFailOnce('document')) throw new ServiceError('network', 'dev: simulated outage');
+    return status(await api(`/api/submissions/${encodeURIComponent(submissionId)}/document`, { method: 'PUT', token: session.token, body: pdf, headers: { 'content-type': 'application/pdf' } }));
+  },
+  async resendEmail(session, submissionId) {
+    return status(await api(`/api/submissions/${encodeURIComponent(submissionId)}/resend-email`, { method: 'POST', token: session.token }));
+  },
+  async downloadDocument(session, submissionId) {
+    let res: Response;
+    try {
+      res = await fetch(`/api/submissions/${encodeURIComponent(submissionId)}/document.pdf`, { headers: { authorization: `Bearer ${session.token}` } });
+    } catch {
+      throw new ServiceError('network', 'offline');
+    }
+    if (!res.ok) throw new ServiceError(res.status === 401 ? 'session_expired' : 'network', res.statusText);
+    return res.blob();
+  },
+};

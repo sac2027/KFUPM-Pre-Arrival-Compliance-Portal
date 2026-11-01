@@ -25,7 +25,7 @@ const resolver: Resolver<LoginInput> = async (values) => {
   return { values: {}, errors };
 };
 
-export function LoginScreen({ auth = authService, onLoggedIn }: { auth?: AuthService; onLoggedIn: (session: Session) => void }) {
+export function LoginScreen({ auth = authService, onLoggedIn, notice }: { auth?: AuthService; onLoggedIn: (session: Session) => void; notice?: MessageKey }) {
   const { t } = useI18n();
   const {
     register,
@@ -35,7 +35,7 @@ export function LoginScreen({ auth = authService, onLoggedIn }: { auth?: AuthSer
     resolver,
     mode: 'onBlur',
     reValidateMode: 'onChange',
-    defaultValues: { passportNumber: '', phoneNumber: '', fullName: '' },
+    defaultValues: { passportNumber: '', phoneNumber: '', email: '', fullName: '' },
   });
   const [pending, setPending] = useState(false);
   const [failure, setFailure] = useState<MessageKey | null>(null);
@@ -47,7 +47,8 @@ export function LoginScreen({ auth = authService, onLoggedIn }: { auth?: AuthSer
     try {
       onLoggedIn(await auth.login(values));
     } catch (err) {
-      setFailure(err instanceof ServiceError && err.code === 'network' ? 'error.network' : 'error.login');
+      const code = err instanceof ServiceError ? err.code : 'network';
+      setFailure(code === 'network' ? 'error.network' : code === 'too_many_attempts' ? 'error.tooMany' : 'error.login');
     } finally {
       setPending(false);
     }
@@ -73,6 +74,11 @@ export function LoginScreen({ auth = authService, onLoggedIn }: { auth?: AuthSer
   return (
     <section className="login" aria-labelledby="login-heading">
       <h2 id="login-heading" data-step-heading tabIndex={-1}>{t('login.heading')}</h2>
+      {notice && (
+        <p className="form__notice" role="status">
+          {t(notice)}
+        </p>
+      )}
       <p className="login__intro">{t('login.intro')}</p>
       <form className="form" noValidate onSubmit={onSubmit}>
         <Field
@@ -98,6 +104,20 @@ export function LoginScreen({ auth = authService, onLoggedIn }: { auth?: AuthSer
           autoComplete="tel"
           maxLength={30}
           {...register('phoneNumber')}
+        />
+        <Field
+          id="email"
+          label={t('login.email')}
+          hint={t('login.email.hint')}
+          error={err('email')}
+          type="email"
+          inputMode="email"
+          dir="ltr"
+          autoComplete="email"
+          autoCapitalize="none"
+          spellCheck={false}
+          maxLength={254}
+          {...register('email')}
         />
         <Field
           id="full-name"

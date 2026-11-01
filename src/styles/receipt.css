@@ -89,3 +89,20 @@
     padding: 1.5rem;
   }
 }
+
+.receipt__email {
+  margin: 0;
+  font-weight: 500;
+}
+
+.receipt__email--failed {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: var(--beige);
+}
+
+.receipt__email--failed p {
+  margin: 0;
+  color: var(--error-text);
+}

@@ -1,4 +1,8 @@
-/** Fixed-window counters in D1 (verify_attempts). Pure decision in `nextWindow`, storage in `checkAndCount`. */
+/**
+ * Fixed-window failure counters in D1 (verify_attempts). Only FAILED sign-ins count: a successful one is cleared,
+ * so a lab or household sharing one IP is never locked out by students who typed everything right.
+ * Pure decision in `nextWindow`; storage in `peek`/`bump`/`clear`.
+ */
 export interface WindowRow {
   window_start: number;
   count: number;
@@ -11,17 +15,25 @@ export function nextWindow(row: WindowRow | null, now: number, limit: number, wi
   return { allowed: true, row: next };
 }
 
-export async function checkAndCount(db: D1Database, key: string, limit: number, windowSeconds: number, now = Math.floor(Date.now() / 1000)): Promise<{ allowed: boolean; retryAfter?: number }> {
-  const row = await db.prepare('SELECT window_start, count FROM verify_attempts WHERE key = ?').bind(key).first<WindowRow>();
-  const r = nextWindow(row ?? null, now, limit, windowSeconds);
+const read = (db: D1Database, key: string) => db.prepare('SELECT window_start, count FROM verify_attempts WHERE key = ?').bind(key).first<WindowRow>();
+
+/** Is this key already over its limit (without counting anything)? */
+export async function peek(db: D1Database, key: string, limit: number, windowSeconds: number, now = Math.floor(Date.now() / 1000)): Promise<{ allowed: boolean; retryAfter?: number }> {
+  const row = await read(db, key);
+  if (!row || now - row.window_start >= windowSeconds || row.count < limit) return { allowed: true };
+  return { allowed: false, retryAfter: row.window_start + windowSeconds - now };
+}
+
+/** Records one failure. */
+export async function bump(db: D1Database, key: string, limit: number, windowSeconds: number, now = Math.floor(Date.now() / 1000)): Promise<void> {
+  const r = nextWindow((await read(db, key)) ?? null, now, limit, windowSeconds);
   await db
     .prepare('INSERT INTO verify_attempts (key, window_start, count) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET window_start = excluded.window_start, count = excluded.count')
     .bind(key, r.row.window_start, r.row.count)
     .run();
-  return r.allowed ? { allowed: true } : { allowed: false, retryAfter: r.retryAfter };
 }
 
-/** Clears a key after a success, so a student who finally gets it right is not punished on the next step. */
+/** Clears a key after a success. */
 export async function clear(db: D1Database, key: string): Promise<void> {
   await db.prepare('DELETE FROM verify_attempts WHERE key = ?').bind(key).run();
 }

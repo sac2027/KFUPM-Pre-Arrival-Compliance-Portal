@@ -4,8 +4,9 @@ import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
-import { clipped, confirmAllTerms, drawSignature, fillLogin, L, overflow } from './helpers';
+import { clipped, confirmAllTerms, drawSignature, fillLogin, L, overflow, settleReceipt } from './helpers';
 import type { Locale } from './helpers';
+import { STUDENTS } from './students';
 
 for (const locale of ['en', 'ar'] as const satisfies readonly Locale[]) {
   test(`worst case: every step fits, nothing is clipped, markup stays literal (${locale})`, async ({ page }) => {
@@ -28,10 +29,16 @@ for (const locale of ['en', 'ar'] as const satisfies readonly Locale[]) {
     expect((await page.locator('h1').innerText()).length).toBeGreaterThan(100);
     await fits('login');
 
-    // Longest valid typed input: 20-char passport, 15-digit phone, 100-letter unbroken Arabic name.
-    await fillLogin(page, locale, { passport: 'AB1234567890123456CD', phone: '+966551234567890', name: 'م'.repeat(100) });
+    // Longest valid typed input first (20-char passport, 15-digit phone, 100 unbroken letters, 254-char email): the form must hold it.
+    await page.getByLabel(s.passport).fill('AB1234567890123456CD');
+    await page.getByLabel(s.phone).fill('+966551234567890');
+    await page.getByLabel(s.email).fill(`${'a'.repeat(64)}@${'b'.repeat(63)}.${'c'.repeat(63)}.${'d'.repeat(57)}.com`);
+    await page.getByLabel(s.name).fill('م'.repeat(100));
+    await fits('login (long input)');
+    // Then sign in as the student with the 190-character roster name.
+    await fillLogin(page, locale, STUDENTS.longName);
     await expect(page.locator('#terms-heading')).toBeFocused();
-    await expect(page.locator('.declarant dd').first()).toContainText('عبد الرحمن بن محمد'); // the 200-char name from the SSO
+    await expect(page.locator('.declarant dd').first()).toContainText('Abdulrahman bin Mohammed bin Abdullah');
     await fits('terms');
 
     // Markup in staff-written text is shown as text and never runs.
@@ -48,11 +55,10 @@ for (const locale of ['en', 'ar'] as const satisfies readonly Locale[]) {
     await drawSignature(page);
     await page.getByRole('button', { name: s.submit }).click();
     await expect(page.getByRole('heading', { level: 2, name: s.heading })).toBeFocused({ timeout: 8000 });
+    await settleReceipt(page);
     await fits('receipt');
-
-    // A 64-character unbroken receipt id wraps inside its box instead of escaping it.
     const ref = page.locator('.receipt__ref');
-    await expect(ref).toHaveText(/^[0-9a-f]{64}$/);
+    await expect(ref).toHaveText(/^PACF-\d{4}-[A-HJ-NP-Z2-9]{6}$/);
     expect(await ref.evaluate((e) => e.scrollWidth <= e.clientWidth + 1)).toBe(true);
   });
 }
@@ -61,11 +67,12 @@ test('worst case: the printed declaration keeps the closing statement and the si
   test.skip(info.project.name !== 'worst-1280', 'PDF output does not depend on the viewport');
   await page.addInitScript(() => localStorage.setItem('pacf.locale', 'en'));
   await page.goto('/?data=worst');
-  await fillLogin(page, 'en', { passport: 'AB1234567890123456CD', phone: '+966551234567890', name: 'Mai Nguyễn' });
+  await fillLogin(page, 'en', STUDENTS.longName);
   await confirmAllTerms(page, 'en');
   await drawSignature(page);
   await page.getByRole('button', { name: L('en').submit }).click();
   await expect(page.getByRole('heading', { level: 2, name: L('en').heading })).toBeFocused({ timeout: 8000 });
+  await settleReceipt(page);
   await page.emulateMedia({ media: 'print' });
   const file = join(mkdtempSync(join(tmpdir(), 'pacf-worst-')), 'worst.pdf');
   writeFileSync(file, await page.pdf({ format: 'A4', printBackground: true, preferCSSPageSize: true }));

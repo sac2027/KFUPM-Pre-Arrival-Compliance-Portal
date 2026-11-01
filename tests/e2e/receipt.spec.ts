@@ -4,6 +4,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { fillLogin, settleReceipt } from './helpers';
+import { byLocale, STUDENTS } from './students';
 
 type Locale = 'en' | 'ar';
 const L = (l: Locale) => ({
@@ -16,14 +18,11 @@ const L = (l: Locale) => ({
   heading: l === 'en' ? 'Declaration submitted' : 'تم إرسال الإقرار',
 });
 
-async function toDone(page: Page, locale: Locale = 'en', fullName = locale === 'en' ? 'Mai Nguyễn' : 'محمد عبدالله') {
+async function toDone(page: Page, locale: Locale = 'en', creds = byLocale(locale)) {
   const s = L(locale);
   await page.addInitScript((l) => localStorage.setItem('pacf.locale', l), locale);
   await page.goto('/');
-  await page.getByLabel(s.passport).fill('N1234567');
-  await page.getByLabel(s.phone).fill('+966551234567');
-  await page.getByLabel(s.name).fill(fullName);
-  await page.getByRole('button', { name: s.signin }).click();
+  await fillLogin(page, locale, creds);
   await page.locator('.term').first().waitFor();
   for (let i = 0; i < 5; i++) await page.locator('.term').nth(i).locator('.term__title label').click();
   await page.getByRole('button', { name: s.cont }).click();
@@ -38,6 +37,7 @@ async function toDone(page: Page, locale: Locale = 'en', fullName = locale === '
   await page.mouse.up();
   await page.getByRole('button', { name: s.submit }).click();
   await expect(page.getByRole('heading', { level: 2, name: s.heading })).toBeFocused({ timeout: 8000 });
+  await settleReceipt(page);
   await page.evaluate(() => document.fonts.ready);
 }
 
@@ -48,7 +48,7 @@ test('shows the receipt with a reference number and moves to Done', async ({ pag
   await expect(page.locator('.stepper [aria-current="step"]').first()).toContainText('Done');
   const ref = (await page.locator('.receipt__ref').textContent())!;
   expect(ref).toMatch(REF);
-  await expect(page.getByRole('button', { name: 'Print or save as PDF' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Print' })).toBeVisible();
 });
 
 test('leaves no personal data in the URL or browser storage, and Finish wipes the page', async ({ page }) => {
@@ -72,7 +72,7 @@ test('leaves no personal data in the URL or browser storage, and Finish wipes th
   await expect(page.getByLabel('Passport number')).toHaveValue('');
   await expect(page.getByLabel('Full name')).toHaveValue('');
   const body = await page.evaluate(() => document.body.innerHTML);
-  for (const secret of ['N1234567', '+966551234567', 'Mai Nguyễn', 'data:image/png']) expect(body).not.toContain(secret);
+  for (const secret of [STUDENTS.mai.passport, '+84912345678', STUDENTS.mai.email, 'Mai Nguyễn', 'Nguyen Thi Mai', 'data:image/png']) expect(body).not.toContain(secret);
   await expect(page.locator('.stepper [aria-current="step"]').first()).toContainText('Sign in');
 });
 
@@ -86,13 +86,13 @@ test('print media shows only the formal declaration, with letterhead, seal and M
     expect(await img.evaluate((e: HTMLImageElement) => e.complete && e.naturalWidth > 0)).toBe(true);
   }
   expect(await sheet.locator('.print-sheet__band').evaluate((e) => getComputedStyle(e).backgroundImage)).toContain('matrix-beige-sand.svg');
-  await expect(sheet).not.toContainText('N1234567');
-  await expect(sheet).toContainText('4567');
+  await expect(sheet).not.toContainText(STUDENTS.mai.passport);
+  await expect(sheet).toContainText('0001'); // last four of E2E00001
 });
 
 test('the receipt fits at this width, in both languages', async ({ page }, info) => {
   void info;
-  await toDone(page, 'ar', 'م'.repeat(100));
+  await toDone(page, 'ar', STUDENTS.longName);
   const r = await page.evaluate(() => {
     const w = document.documentElement.clientWidth;
     const escapes = [...document.querySelectorAll('body *')]
@@ -109,7 +109,8 @@ test('the receipt fits at this width, in both languages', async ({ page }, info)
 for (const locale of ['en', 'ar'] as const) {
   test(`saves a real PDF that carries the declaration and none of the screen chrome (${locale})`, async ({ page }, info) => {
     test.skip(info.project.name !== 'desktop-1280', 'PDF output does not depend on the viewport');
-    await toDone(page, locale);
+    const creds = byLocale(locale);
+    await toDone(page, locale, creds);
     const ref = (await page.locator('.receipt__ref').textContent())!;
     await page.emulateMedia({ media: 'print' });
     const dir = mkdtempSync(join(tmpdir(), 'pacf-'));
@@ -120,15 +121,15 @@ for (const locale of ['en', 'ar'] as const) {
     expect(pages).toBeLessThanOrEqual(2);
     expect(text).toContain(ref);
     expect(text).toContain('KFUPM-INTL-PACF');
-    expect(text).toContain('4567');
-    expect(text).not.toContain('N1234567');
-    expect(text).not.toContain('+966551234567');
-    for (const chrome of ['Continue to signature', 'Print or save as PDF', 'Pre-Arrival Onboarding Portal']) expect(text).not.toContain(chrome);
+    expect(text).toContain(creds.passport.slice(-4));
+    expect(text).not.toContain(creds.passport);
+    expect(text).not.toContain(creds.phone.replace(/\s/g, ''));
+    for (const chrome of ['Continue to signature', 'Print', 'Pre-Arrival Onboarding Portal']) expect(text).not.toContain(chrome);
     if (locale === 'en') {
       expect(text).toContain('Pre-Arrival Compliance Form for International Students');
       expect(text).toContain('Compliance with Saudi Laws and Regulations');
       expect(text).toContain('Reporting and Understanding Consequences');
-      expect(text).toContain('Mai Nguyễn');
+      expect(text).toContain('Nguyen Thi Mai');
     }
     // Optional: keep the PDFs for a human to look at (PACF_PDF_OUT=/some/dir npm run test:e2e).
     if (process.env.PACF_PDF_OUT) execFileSync('cp', [file, `${process.env.PACF_PDF_OUT}/`]);

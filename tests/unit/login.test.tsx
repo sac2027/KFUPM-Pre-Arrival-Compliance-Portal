@@ -9,8 +9,10 @@ import type { AuthService, Session } from '../../src/services/types';
 
 const session: Session = {
   sessionId: 's-1',
-  student: { passportNumber: 'A1234567', phoneNumber: '+966551234567', fullName: 'Mai Nguyễn' },
+  student: { fullName: 'Mai Nguyễn', email: 'm•••@example.com', passportLast4: '4567' },
   issuedAt: '2026-11-01T10:00:00.000Z',
+  expiresAt: '2026-11-01T10:30:00.000Z',
+  token: 't',
 };
 const makeAuth = (login: AuthService['login']): AuthService => ({ login: vi.fn(login), logout: vi.fn() });
 
@@ -25,24 +27,26 @@ function setup(auth: AuthService, locale: Locale = 'en') {
   const f = {
     passport: () => screen.getByLabelText(/passport number|رقم جواز السفر/i),
     phone: () => screen.getByLabelText(/phone number|رقم الهاتف/i),
+    email: () => screen.getByLabelText(/email address|البريد الإلكتروني/i),
     name: () => screen.getByLabelText(/full name|الاسم الكامل/i),
     submit: () => screen.getByRole('button', { name: /sign in|signing in|تسجيل الدخول|جارٍ/i }),
   };
-  const fill = async (p = 'a1234567', ph = '+966 55 123 4567', n = 'Mai Nguyễn') => {
+  const fill = async (p = 'a1234567', ph = '+966 55 123 4567', n = 'Mai Nguyễn', e = ' Mai@Example.com') => {
     await user.type(f.passport(), p);
     await user.type(f.phone(), ph);
+    await user.type(f.email(), e);
     await user.type(f.name(), n);
   };
   return { user, f, fill, onLoggedIn };
 }
 
 describe('LoginScreen', () => {
-  it('shows three required errors on an empty submit, focuses the first, and does not call auth', async () => {
+  it('shows four required errors on an empty submit, focuses the first, and does not call auth', async () => {
     const auth = makeAuth(async () => session);
     const { user, f } = setup(auth);
     await user.click(f.submit());
-    expect(await screen.findAllByText('This field is required.')).toHaveLength(3);
-    for (const el of [f.passport(), f.phone(), f.name()]) expect(el).toHaveAttribute('aria-invalid', 'true');
+    expect(await screen.findAllByText('This field is required.')).toHaveLength(4);
+    for (const el of [f.passport(), f.phone(), f.email(), f.name()]) expect(el).toHaveAttribute('aria-invalid', 'true');
     expect(f.passport()).toHaveFocus();
     expect(auth.login).not.toHaveBeenCalled();
   });
@@ -54,7 +58,7 @@ describe('LoginScreen', () => {
     await user.click(f.submit());
     await waitFor(() => expect(onLoggedIn).toHaveBeenCalledWith(session));
     expect(auth.login).toHaveBeenCalledTimes(1);
-    expect(auth.login).toHaveBeenCalledWith({ passportNumber: 'A1234567', phoneNumber: '+966551234567', fullName: 'Mai Nguyễn' });
+    expect(auth.login).toHaveBeenCalledWith({ passportNumber: 'A1234567', phoneNumber: '+966551234567', email: 'mai@example.com', fullName: 'Mai Nguyễn' });
   });
 
   it('accepts Arabic-Indic digits and an Arabic name', async () => {
@@ -63,7 +67,14 @@ describe('LoginScreen', () => {
     await fill('N١٢٣٤٥٦٧', '+٩٦٦ ٥٥ ١٢٣ ٤٥٦٧', 'محمد عبدالله الغامدي');
     await user.click(f.submit());
     await waitFor(() => expect(auth.login).toHaveBeenCalledTimes(1));
-    expect(auth.login).toHaveBeenCalledWith({ passportNumber: 'N1234567', phoneNumber: '+966551234567', fullName: 'محمد عبدالله الغامدي' });
+    expect(auth.login).toHaveBeenCalledWith({ passportNumber: 'N1234567', phoneNumber: '+966551234567', email: 'mai@example.com', fullName: 'محمد عبدالله الغامدي' });
+  });
+
+  it('tells a student who left out the country code what to add', async () => {
+    const { user, f } = setup(makeAuth(async () => session));
+    await user.type(f.phone(), '0551234567');
+    await user.tab();
+    expect(await screen.findByText(/Start with your country code/)).toBeInTheDocument();
   });
 
   it('validates a field when it loses focus, linking the error with aria-describedby', async () => {
@@ -88,7 +99,8 @@ describe('LoginScreen', () => {
   });
 
   it.each([
-    ['invalid_credentials', /couldn’t sign you in/i],
+    ['invalid_credentials', /do not match our records/i],
+    ['too_many_attempts', /too many attempts/i],
     ['network', /can’t reach the server/i],
   ] as const)('keeps the form filled and announces a %s failure', async (code, text) => {
     const auth = makeAuth(async () => {
@@ -110,12 +122,16 @@ describe('LoginScreen', () => {
     expect(p).toHaveAttribute('autocomplete', 'off');
     expect(screen.getByLabelText(/phone number/i)).toHaveAttribute('dir', 'ltr');
     expect(screen.getByLabelText(/phone number/i)).toHaveAttribute('autocomplete', 'tel');
+    expect(screen.getByLabelText(/email address/i)).toHaveAttribute('dir', 'ltr');
+    expect(screen.getByLabelText(/email address/i)).toHaveAttribute('autocomplete', 'email');
+    expect(screen.getByLabelText(/email address/i)).toHaveAttribute('type', 'email');
     expect(screen.getByLabelText(/full name/i)).toHaveAttribute('dir', 'auto');
   });
 
   it('renders in Arabic', () => {
     setup(makeAuth(async () => session), 'ar');
     expect(screen.getByLabelText('رقم جواز السفر')).toBeInTheDocument();
+    expect(screen.getByLabelText('البريد الإلكتروني')).toBeInTheDocument();
     expect(screen.getByLabelText('الاسم الكامل')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'تسجيل الدخول' })).toBeInTheDocument();
   });

@@ -23,12 +23,12 @@ const all = rules['/*']!;
 const csp = Object.fromEntries(all['Content-Security-Policy']!.split(';').map((d) => d.trim().split(/\s+/)).map(([k, ...v]) => [k, v])) as Record<string, string[]>;
 
 describe('public/_headers', () => {
-  it('has a strict Content-Security-Policy: same-origin only, nothing inline, no eval, no framing', () => {
+  it('has a strict Content-Security-Policy: same-origin only, nothing inline, no eval, no framing, no foreign base', () => {
     expect(csp['default-src']).toEqual(["'self'"]);
     expect(csp['script-src']).toEqual(["'self'"]);
     expect(csp['style-src']).toEqual(["'self'"]);
     expect(csp['object-src']).toEqual(["'none'"]);
-    expect(csp['base-uri']).toEqual(["'none'"]);
+    expect(csp['base-uri']).toEqual(["'self'"]); // 'self', not 'none': the PDF capture sets a same-origin <base> to resolve font URLs
     expect(csp['frame-ancestors']).toEqual(["'none'"]);
     const raw = all['Content-Security-Policy']!;
     expect(raw).not.toMatch(/unsafe-inline|unsafe-eval|\s\*(\s|;|$)/);

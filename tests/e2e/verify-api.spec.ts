@@ -2,12 +2,12 @@ import { expect, test } from '@playwright/test';
 
 const good = { passportNumber: 'TEST0001', phoneNumber: '+966 50 000 0001', fullName: 'Eyad Salem', email: 'S202368990@kfupm.edu.sa' };
 
-test.describe('POST /api/verify', () => {
-  test.beforeEach((_fixtures, info) => {
-    test.skip(info.project.name !== 'desktop-1280', 'not viewport dependent');
-  });
+const onlyDesktop = (info: { project: { name: string } }) => test.skip(info.project.name !== 'desktop-1280', 'not viewport dependent');
 
-  test('a full match returns a session with the roster name, a masked email and a token; no passport number', async ({ request }) => {
+test.describe('POST /api/verify', () => {
+
+  test('a full match returns a session with the roster name, a masked email and a token; no passport number', async ({ request }, info) => {
+    onlyDesktop(info);
     const res = await request.post('/api/verify', { data: good });
     expect(res.status()).toBe(200);
     const body = await res.json();
@@ -19,7 +19,8 @@ test.describe('POST /api/verify', () => {
     expect(JSON.stringify(body)).not.toContain('+966500000001');
   });
 
-  test('any single mismatch, an unknown passport, or a malformed body gets the same generic answer', async ({ request }) => {
+  test('any single mismatch, an unknown passport, or a malformed body gets the same generic answer', async ({ request }, info) => {
+    onlyDesktop(info);
     const cases = [
       { ...good, phoneNumber: '+966500000009' },
       { ...good, email: 'someone.else@kfupm.edu.sa' },
@@ -38,7 +39,9 @@ test.describe('POST /api/verify', () => {
     expect(malformed.status()).toBe(400);
   });
 
-  test('the sixth failure for one passport inside 15 minutes is throttled, and the right details are throttled too', async ({ request }) => {
+  test('the sixth failure for one passport inside 15 minutes is throttled; successful sign-ins never count', async ({ request }, info) => {
+    onlyDesktop(info);
+    for (let i = 0; i < 8; i++) expect((await request.post('/api/verify', { data: good })).status()).toBe(200); // many successes, same IP
     const passport = `THROTTLE${Date.now().toString(36).toUpperCase()}`.slice(0, 20);
     let last = 0;
     for (let i = 0; i < 5; i++) last = (await request.post('/api/verify', { data: { ...good, passportNumber: passport } })).status();
@@ -46,5 +49,6 @@ test.describe('POST /api/verify', () => {
     const sixth = await request.post('/api/verify', { data: { ...good, passportNumber: passport } });
     expect(sixth.status()).toBe(429);
     expect(Number(sixth.headers()['retry-after'])).toBeGreaterThan(0);
+    expect((await request.post('/api/verify', { data: good })).status()).toBe(200); // the right details still work from this IP
   });
 });

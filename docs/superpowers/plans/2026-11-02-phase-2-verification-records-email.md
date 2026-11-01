@@ -86,6 +86,8 @@ docs/HANDOVER.md                     account membership, secrets, export runbook
 
 ### Task 3: `POST /api/verify` with throttle and session token
 
+> As built: only *failed* attempts are counted (5 per passport, 100 per IP, 15-minute window); a success clears the passport's counter. The first version counted successes and locked out the whole test suite (and would have locked out any shared campus IP) after twenty sign-ins.
+
 **Files:** `functions/api/verify.ts`, `functions/lib/{jwt.ts,throttle.ts,validate.ts}`, `migrations/records/0001_records.sql` (sessions, verify_attempts, outbox, submissions), `tests/functions/{jwt,throttle,verify}.test.ts`, `tests/e2e/verify-api.spec.ts`.
 
 **Interfaces:** `signSession({sid}, secret, ttlSeconds): Promise<string>`, `verifySession(token, secret): Promise<{sid}|null>`; `checkAndCount(db, key, limit, windowSeconds): Promise<{allowed: boolean; retryAfter?: number}>`; response shape per spec.
@@ -113,6 +115,8 @@ docs/HANDOVER.md                     account membership, secrets, export runbook
 - [ ] Verify, commit `feat(api): record submissions with the signature in R2`.
 
 ### Task 6: PDF in the browser, document upload, email, receipt status
+
+> As built: the PDF libraries load lazily on the receipt (separate 430 kB chunk); the capture stage is marked `data-capture-stage`; CSP `base-uri` is `'self'` because html-to-image sets a same-origin `<base>` while embedding fonts; `?fail=document` exercises the retry path on the dev server.
 
 **Files:** `src/lib/pdf.ts`, `functions/api/submissions/[id]/{document.ts,resend-email.ts,document.pdf.ts}`, `functions/lib/email.ts`, `src/features/receipt/ReceiptScreen.tsx`, `src/features/signature/SignatureStep.tsx` (orchestrates the two steps), i18n, `tests/functions/email.test.ts`, `tests/e2e/submission.spec.ts`.
 

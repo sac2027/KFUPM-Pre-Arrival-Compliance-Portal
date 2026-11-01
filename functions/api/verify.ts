@@ -1,20 +1,20 @@
 import type { Env } from '../lib/env';
 import { error, handle, json, readJson } from '../lib/http';
 import { signSession } from '../lib/jwt';
-import { checkAndCount, clear, hashIp } from '../lib/throttle';
+import { bump, clear, hashIp, peek } from '../lib/throttle';
 import { maskEmail, matchStudent, parseVerifyBody } from '../lib/verify';
 import type { RosterRow } from '../lib/verify';
 
 const SESSION_TTL_SECONDS = 30 * 60;
 const WINDOW_SECONDS = 15 * 60;
 const PASSPORT_LIMIT = 5;
-const IP_LIMIT = 20;
+const IP_LIMIT = 100; // failures per IP per window; successes never count (shared campus and household IPs)
 const NO_MATCH = { code: 'no_match', message: 'These details do not match our records. Check each one, typing your name exactly as it appears in your passport.' };
 
 /**
  * POST /api/verify {passportNumber, phoneNumber, fullName, email}
  * One generic failure for every kind of mismatch, so the response never reveals which field was wrong or whether
- * the passport exists. Throttled per passport and per (hashed) IP.
+ * the passport exists. Failed attempts are throttled per passport and per (hashed) IP; successes are not counted.
  */
 export const onRequestPost = handle<Env>(async ({ request, env }) => {
   const input = parseVerifyBody(await readJson(request));
@@ -23,14 +23,17 @@ export const onRequestPost = handle<Env>(async ({ request, env }) => {
   const ip = request.headers.get('cf-connecting-ip') ?? '0.0.0.0';
   const ipKey = `ip:${await hashIp(ip, env.SESSION_SECRET)}`;
   const passportKey = `p:${input.passport}`;
-  const [byIp, byPassport] = await Promise.all([checkAndCount(env.RECORDS, ipKey, IP_LIMIT, WINDOW_SECONDS), checkAndCount(env.RECORDS, passportKey, PASSPORT_LIMIT, WINDOW_SECONDS)]);
+  const [byIp, byPassport] = await Promise.all([peek(env.RECORDS, ipKey, IP_LIMIT, WINDOW_SECONDS), peek(env.RECORDS, passportKey, PASSPORT_LIMIT, WINDOW_SECONDS)]);
   if (!byIp.allowed || !byPassport.allowed) {
     const wait = Math.max(byIp.retryAfter ?? 0, byPassport.retryAfter ?? 0);
     return error(429, 'too_many_attempts', 'Too many attempts. Please wait before trying again.', { 'retry-after': String(wait) });
   }
 
   const row = await env.ROSTER.prepare('SELECT passport_number, full_name, phone_e164, email, status FROM students WHERE passport_number = ?').bind(input.passport).first<RosterRow>();
-  if (!matchStudent(input, row)) return json(401, NO_MATCH);
+  if (!matchStudent(input, row)) {
+    await Promise.all([bump(env.RECORDS, ipKey, IP_LIMIT, WINDOW_SECONDS), bump(env.RECORDS, passportKey, PASSPORT_LIMIT, WINDOW_SECONDS)]);
+    return json(401, NO_MATCH);
+  }
 
   const sid = crypto.randomUUID();
   const issuedAt = new Date();

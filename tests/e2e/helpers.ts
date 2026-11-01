@@ -5,6 +5,7 @@ export type Locale = 'en' | 'ar';
 export const L = (l: Locale) => ({
   passport: l === 'en' ? 'Passport number' : 'رقم جواز السفر',
   phone: l === 'en' ? 'Phone number' : 'رقم الهاتف',
+  email: l === 'en' ? 'Email address' : 'البريد الإلكتروني',
   name: l === 'en' ? 'Full name' : 'الاسم الكامل',
   signin: l === 'en' ? 'Sign in' : 'تسجيل الدخول',
   cont: l === 'en' ? 'Continue to signature' : 'المتابعة إلى التوقيع',
@@ -19,7 +20,7 @@ export const overflow = (page: Page) =>
     const w = document.documentElement.clientWidth;
     const escapes = [...document.querySelectorAll('body *')]
       .filter((el) => {
-        if (el.closest('[data-dev-chrome]')) return false;
+        if (el.closest('[data-dev-chrome]') || el.closest('[data-capture-stage]')) return false;
         const r = el.getBoundingClientRect();
         return r.width > 0 && getComputedStyle(el).position !== 'absolute' && (r.left < -0.5 || r.right > w + 0.5);
       })
@@ -32,7 +33,7 @@ export const clipped = (page: Page) =>
   page.evaluate(() =>
     [...document.querySelectorAll('body *')]
       .filter((el) => {
-        if (el.closest('[data-dev-chrome]') || el.closest('.sr-only')) return false;
+        if (el.closest('[data-dev-chrome]') || el.closest('.sr-only') || el.closest('[data-capture-stage]')) return false;
         const cs = getComputedStyle(el);
         if (!/(hidden|clip)/.test(cs.overflowY) || cs.clipPath !== 'none') return false;
         return el.scrollHeight > el.clientHeight + 1 && el.clientHeight > 2;
@@ -40,12 +41,19 @@ export const clipped = (page: Page) =>
       .map((el) => `${el.tagName}.${(el as HTMLElement).className}`),
   );
 
-export async function fillLogin(page: Page, locale: Locale, p: { passport: string; phone: string; name: string }) {
+export async function fillLogin(page: Page, locale: Locale, p: { passport: string; phone: string; email: string; name: string }) {
   const s = L(locale);
   await page.getByLabel(s.passport).fill(p.passport);
   await page.getByLabel(s.phone).fill(p.phone);
+  await page.getByLabel(s.email).fill(p.email);
   await page.getByLabel(s.name).fill(p.name);
   await page.getByRole('button', { name: s.signin }).click();
+}
+
+/** Signs in as a roster student and waits for the terms step. */
+export async function signIn(page: Page, locale: Locale, creds: { passport: string; phone: string; email: string; name: string }) {
+  await fillLogin(page, locale, creds);
+  await expect(page.locator('#terms-heading')).toBeFocused({ timeout: 10_000 });
 }
 
 export async function confirmAllTerms(page: Page, locale: Locale) {
@@ -88,3 +96,9 @@ export const makePng = (page: Page, o: { w: number; h: number; ink: boolean; gro
     }
     return c.toDataURL('image/png').split(',')[1]!;
   }, o);
+
+/** The receipt renders and uploads the PDF right after it opens; wait until that has settled before measuring it. */
+export async function settleReceipt(page: Page) {
+  await expect(page.locator('.receipt__email--sent, .receipt__email--failed')).toBeVisible({ timeout: 25_000 });
+  await expect(page.locator('[data-capture-stage]')).toHaveCount(0);
+}

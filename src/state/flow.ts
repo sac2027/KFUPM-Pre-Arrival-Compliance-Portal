@@ -1,6 +1,6 @@
 import { TERM_IDS } from '../lib/termsSchema';
 import type { TermId } from '../lib/termsSchema';
-import type { Session, Signature, SubmissionReceipt } from '../services/types';
+import type { DocumentStatus, Session, Signature, SubmissionReceipt } from '../services/types';
 
 export type Step = 'login' | 'terms' | 'sign' | 'done';
 export const STEPS: readonly Step[] = ['login', 'terms', 'sign', 'done'];
@@ -13,6 +13,8 @@ export interface FlowState {
   receipt: SubmissionReceipt | null;
   /** Kept (in memory) after submission only so the printable declaration can show it. */
   signature: Signature | null;
+  /** Where the PDF copy went (set by the document upload after the receipt step opens). */
+  document: DocumentStatus | null;
 }
 
 export type FlowAction =
@@ -20,9 +22,11 @@ export type FlowAction =
   | { type: 'termsAccepted'; ids: TermId[] }
   | { type: 'back' }
   | { type: 'submitted'; receipt: SubmissionReceipt; signature: Signature }
+  | { type: 'sessionExpired' }
+  | { type: 'documentStatus'; status: DocumentStatus }
   | { type: 'reset' };
 
-export const initialFlowState: FlowState = { step: 'login', session: null, acceptedTermIds: [], receipt: null, signature: null };
+export const initialFlowState: FlowState = { step: 'login', session: null, acceptedTermIds: [], receipt: null, signature: null, document: null };
 
 const isAllFiveInOrder = (ids: TermId[]) => ids.length === TERM_IDS.length && TERM_IDS.every((id, i) => ids[i] === id);
 
@@ -39,8 +43,13 @@ export function flowReducer(state: FlowState, action: FlowAction): FlowState {
       return state.step === 'sign' ? { ...state, step: 'terms' } : state;
     case 'submitted':
       return state.step === 'sign' && state.session && isAllFiveInOrder(state.acceptedTermIds)
-        ? { ...state, step: 'done', receipt: action.receipt, signature: action.signature }
+        ? { ...state, step: 'done', receipt: action.receipt, signature: action.signature, document: { state: 'pending' } }
         : state;
+    case 'documentStatus':
+      return state.step === 'done' ? { ...state, document: action.status } : state;
+    case 'sessionExpired':
+      // Back to sign-in, keeping what the student already confirmed so the terms come back pre-ticked.
+      return state.step === 'terms' || state.step === 'sign' ? { ...state, step: 'login', session: null } : state;
     case 'reset':
       return initialFlowState;
   }
