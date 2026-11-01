@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { Button } from '../../components/Button';
 import { useI18n } from '../../i18n/I18nProvider';
+import { formatDate } from '../../lib/format';
 import { loadTerms } from '../../lib/terms';
 import { TERM_IDS } from '../../lib/termsSchema';
 import type { TermId } from '../../lib/termsSchema';
@@ -8,12 +9,6 @@ import type { Session } from '../../services/types';
 import { TermCard } from './TermCard';
 
 const TERMS = loadTerms();
-
-/** Gregorian with Latin digits in both languages, so the printed declaration reads the same everywhere. */
-function formatDate(iso: string, locale: 'en' | 'ar'): string {
-  const tag = locale === 'ar' ? 'ar-u-nu-latn-ca-gregory' : 'en-GB-u-ca-gregory';
-  return new Intl.DateTimeFormat(tag, { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(iso));
-}
 
 export function TermsStep({
   session,

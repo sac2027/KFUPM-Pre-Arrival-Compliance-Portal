@@ -8,6 +8,8 @@ import './styles/shell.css';
 import './styles/forms.css';
 import './styles/terms.css';
 import './styles/signature.css';
+import './styles/receipt.css';
+import './styles/print.css';
 import './styles/motion.css';
 
 const root = document.getElementById('root');

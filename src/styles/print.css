@@ -1,0 +1,135 @@
+/* The signed declaration exists only for print / save-as-PDF. */
+.print-sheet {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm 14mm;
+  }
+
+  html,
+  body {
+    background: #fff;
+  }
+
+  .skip-link,
+  .masthead,
+  .page__footer,
+  .stepper,
+  .doc__head,
+  .doc__intro,
+  .receipt {
+    display: none !important;
+  }
+
+  .page {
+    inline-size: auto;
+    padding: 0;
+  }
+
+  .doc {
+    padding: 0;
+    background: none;
+  }
+
+  .print-sheet {
+    display: block;
+    color: #000;
+    font-size: 10pt;
+    line-height: 1.45;
+  }
+
+  .print-sheet p {
+    margin: 0 0 2.5mm;
+  }
+
+  .print-sheet__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .print-sheet__logo {
+    inline-size: 48mm;
+    block-size: auto;
+  }
+
+  .print-sheet__seal {
+    inline-size: 20mm;
+    block-size: auto;
+  }
+
+  /* The generator export, once, as the page's edge. */
+  .print-sheet__band {
+    block-size: 9mm;
+    margin-block: 1mm 4mm;
+    background-color: var(--beige);
+    background-image: url('/brand/matrix/matrix-beige-sand.svg');
+    background-size: cover;
+    background-position: right bottom;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  [dir='rtl'] .print-sheet__band {
+    background-position: left bottom;
+  }
+
+  .print-sheet__title {
+    margin-block-end: 2mm;
+    font-size: 16pt;
+    line-height: 1.2;
+  }
+
+  .print-sheet__meta {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: 4mm;
+    row-gap: 1mm;
+    margin: 0 0 3.5mm;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .print-sheet__meta dt {
+    color: var(--turquoise);
+    font-weight: 500;
+  }
+
+  .print-sheet__meta dd {
+    margin: 0;
+  }
+
+  .print-sheet__terms {
+    margin: 3mm 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .print-sheet__terms li {
+    break-inside: avoid;
+    margin-block-end: 3mm;
+  }
+
+  .print-sheet__terms h3 {
+    margin: 0 0 1mm;
+    font-size: 11pt;
+  }
+
+  .print-sheet__sign {
+    break-inside: avoid; /* the closing statement and the signature never part */
+    margin-block-start: 5mm;
+  }
+
+  .print-sheet__signature {
+    max-block-size: 22mm;
+    max-inline-size: 64mm;
+    margin-block-end: 3mm;
+  }
+
+  .step {
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}

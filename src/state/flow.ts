@@ -1,6 +1,6 @@
 import { TERM_IDS } from '../lib/termsSchema';
 import type { TermId } from '../lib/termsSchema';
-import type { Session, SubmissionReceipt } from '../services/types';
+import type { Session, Signature, SubmissionReceipt } from '../services/types';
 
 export type Step = 'login' | 'terms' | 'sign' | 'done';
 export const STEPS: readonly Step[] = ['login', 'terms', 'sign', 'done'];
@@ -11,16 +11,18 @@ export interface FlowState {
   session: Session | null;
   acceptedTermIds: TermId[];
   receipt: SubmissionReceipt | null;
+  /** Kept (in memory) after submission only so the printable declaration can show it. */
+  signature: Signature | null;
 }
 
 export type FlowAction =
   | { type: 'loggedIn'; session: Session }
   | { type: 'termsAccepted'; ids: TermId[] }
   | { type: 'back' }
-  | { type: 'submitted'; receipt: SubmissionReceipt }
+  | { type: 'submitted'; receipt: SubmissionReceipt; signature: Signature }
   | { type: 'reset' };
 
-export const initialFlowState: FlowState = { step: 'login', session: null, acceptedTermIds: [], receipt: null };
+export const initialFlowState: FlowState = { step: 'login', session: null, acceptedTermIds: [], receipt: null, signature: null };
 
 const isAllFiveInOrder = (ids: TermId[]) => ids.length === TERM_IDS.length && TERM_IDS.every((id, i) => ids[i] === id);
 
@@ -37,7 +39,7 @@ export function flowReducer(state: FlowState, action: FlowAction): FlowState {
       return state.step === 'sign' ? { ...state, step: 'terms' } : state;
     case 'submitted':
       return state.step === 'sign' && state.session && isAllFiveInOrder(state.acceptedTermIds)
-        ? { ...state, step: 'done', receipt: action.receipt }
+        ? { ...state, step: 'done', receipt: action.receipt, signature: action.signature }
         : state;
     case 'reset':
       return initialFlowState;

@@ -64,5 +64,17 @@
   "error.sig.size": "That image is larger than 2 MB. Choose a smaller file.",
   "error.sig.empty": "That file is empty. Choose another image.",
   "error.sig.read": "We couldn't read that image. Try another file.",
-  "error.submit": "We couldn't submit your declaration. Your signature is still here. Try again."
+  "error.submit": "We couldn't submit your declaration. Your signature is still here. Try again.",
+  "receipt.heading": "Declaration submitted",
+  "receipt.lead": "We received your signed declaration. Keep this reference number.",
+  "receipt.reference": "Reference number",
+  "receipt.received": "Received",
+  "receipt.print": "Print or save as PDF",
+  "receipt.finish": "Finish and clear my details",
+  "receipt.privacy": "Your details are not stored in this browser. Finishing clears them from this page.",
+  "print.signedBy": "Signed by",
+  "print.passport": "Passport number",
+  "print.signature": "Signature",
+  "print.signedOn": "Signed on",
+  "print.sealAlt": "KFUPM seal"
 }

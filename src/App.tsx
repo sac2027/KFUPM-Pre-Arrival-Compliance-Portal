@@ -3,10 +3,12 @@ import { Masthead } from './components/Masthead';
 import { StepPanel } from './components/StepPanel';
 import { Stepper } from './components/Stepper';
 import { LoginScreen } from './features/login/LoginScreen';
+import { ReceiptScreen } from './features/receipt/ReceiptScreen';
 import { SignatureStep } from './features/signature/SignatureStep';
 import { TermsStep } from './features/terms/TermsStep';
 import { I18nProvider, useI18n } from './i18n/I18nProvider';
 import { loadTerms } from './lib/terms';
+import { authService } from './services/authService';
 import { dbService } from './services/dbService';
 import { flowReducer, initialFlowState } from './state/flow';
 
@@ -58,7 +60,19 @@ function Shell() {
                     signature,
                     submittedAt: new Date().toISOString(),
                   });
-                  dispatch({ type: 'submitted', receipt });
+                  dispatch({ type: 'submitted', receipt, signature });
+                }}
+              />
+            )}
+            {flow.step === 'done' && flow.session && flow.receipt && flow.signature && (
+              <ReceiptScreen
+                session={flow.session}
+                acceptedTermIds={flow.acceptedTermIds}
+                signature={flow.signature}
+                receipt={flow.receipt}
+                onFinish={() => {
+                  void authService.logout();
+                  dispatch({ type: 'reset' });
                 }}
               />
             )}

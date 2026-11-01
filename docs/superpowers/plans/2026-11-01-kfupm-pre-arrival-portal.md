@@ -212,7 +212,7 @@ docs/HANDOFF.md                    what IT replaces, what staff edit
 
 - [ ] **Step 1: Write failing tests:** double-click on Submit calls `dbService.submitCompliance` once; rejection shows an error banner and keeps the signature and boxes; retry succeeds and shows the reference number (pins Review Focus 6); payload contains exactly the 5 ids and no extra PII.
 - [ ] **Step 2:** Run → FAIL.
-- [ ] **Step 3:** Implement. Receipt shows reference number, timestamp, a "Print / Save as PDF" action with a print stylesheet that renders the signed declaration on a formal letterhead (Full Stacked lockup, official Seal, document ref), and a clear-session button that wipes memory.
+- [ ] **Step 3:** Implement. (Built across Tasks 10–11: the one-request-at-a-time guard, the failure banner with retry, and the `dbService` call live in `SignatureStep`, tested there; this task adds the receipt, the print view and the wipe.) Receipt shows reference number, timestamp, a "Print / Save as PDF" action with a print stylesheet that renders the signed declaration on a formal letterhead (Full Stacked lockup, official Seal, document ref), and a clear-session button that wipes memory.
 - [ ] **Step 4:** Run → PASS.
 - [ ] **Step 5: Commit** `feat(submit): mock submission, receipt and printable confirmation`
 
