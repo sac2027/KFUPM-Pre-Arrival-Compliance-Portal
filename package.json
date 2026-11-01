@@ -17,7 +17,9 @@
     "dev:api": "wrangler pages dev --port 8788 --ip 127.0.0.1",
     "db:migrate:local": "wrangler d1 migrations apply pacf-roster --local && wrangler d1 migrations apply pacf-records --local",
     "db:migrate:remote": "wrangler d1 migrations apply pacf-roster --remote && wrangler d1 migrations apply pacf-records --remote",
-    "serve:test": "npm run build && npm run db:migrate:local && npm run dev:api"
+    "serve:test": "npm run build && npm run db:migrate:local && npm run db:seed:local && npm run dev:api",
+    "roster:import": "node --experimental-strip-types scripts/roster-import.ts",
+    "db:seed:local": "node --experimental-strip-types scripts/roster-import.ts data/roster.sample.csv"
   },
   "dependencies": {
     "@radix-ui/react-tabs": "^1.2.1",
