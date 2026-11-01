@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '../../components/Button';
 import { useI18n } from '../../i18n/I18nProvider';
 import { formatDate } from '../../lib/format';
@@ -14,24 +14,52 @@ export function TermsStep({
   session,
   initialAccepted,
   onContinue,
+  onProgress,
+  onChangeDetails,
+  leaveRequested = false,
+  onCancelLeave,
 }: {
   session: Session;
   initialAccepted: TermId[];
   onContinue: (ids: TermId[]) => void;
+  /** Every tick change, in order, so the app can keep them across Back and re-sign-in. */
+  onProgress?: (ids: TermId[]) => void;
+  /** Ends the verified session and returns to sign-in (after the student confirms). */
+  onChangeDetails?: () => void;
+  /** True when the browser's Back button asked to leave: show the same confirmation. */
+  leaveRequested?: boolean;
+  onCancelLeave?: () => void;
 }) {
   const { t, locale } = useI18n();
+  const [leaving, setLeaving] = useState(false);
+  const confirmLeaveRef = useRef<HTMLButtonElement>(null);
+  const changeRef = useRef<HTMLButtonElement>(null);
+  const askedLeave = useRef(false);
+  const showLeave = leaving || leaveRequested;
+  useEffect(() => {
+    if (showLeave) {
+      askedLeave.current = true;
+      confirmLeaveRef.current?.focus();
+    } else if (askedLeave.current) {
+      changeRef.current?.focus();
+    }
+  }, [showLeave]);
+  const cancelLeave = () => {
+    setLeaving(false);
+    onCancelLeave?.();
+  };
   const [accepted, setAccepted] = useState<ReadonlySet<TermId>>(() => new Set(initialAccepted));
   const listRef = useRef<HTMLOListElement>(null);
   const count = accepted.size;
   const complete = count === TERM_IDS.length;
 
-  const toggle = (id: TermId, on: boolean) =>
-    setAccepted((prev) => {
-      const next = new Set(prev);
-      if (on) next.add(id);
-      else next.delete(id);
-      return next;
-    });
+  const toggle = (id: TermId, on: boolean) => {
+    const next = new Set(accepted);
+    if (on) next.add(id);
+    else next.delete(id);
+    setAccepted(next);
+    onProgress?.(TERM_IDS.filter((x) => next.has(x)));
+  };
 
   const onContinueClick = () => {
     if (!complete) {
@@ -83,6 +111,22 @@ export function TermsStep({
         ))}
       </ol>
 
+      {showLeave && (
+        <div className="confirm" role="group" aria-labelledby="terms-leave">
+          <p id="terms-leave" role="alert">
+            {t('terms.leaveWarn')}
+          </p>
+          <div className="confirm__actions">
+            <button ref={confirmLeaveRef} type="button" className="btn" onClick={onChangeDetails}>
+              {t('terms.leaveConfirm')}
+            </button>
+            <Button type="button" variant="quiet" onClick={cancelLeave}>
+              {t('terms.leaveCancel')}
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="terms__actions">
         <Button
           type="button"
@@ -96,6 +140,11 @@ export function TermsStep({
           <p id="terms-incomplete" className="terms__hint">
             {t('terms.incomplete')}
           </p>
+        )}
+        {onChangeDetails && !showLeave && (
+          <button ref={changeRef} type="button" className="btn btn--quiet" onClick={() => setLeaving(true)}>
+            {t('terms.changeDetails')}
+          </button>
         )}
       </div>
     </section>

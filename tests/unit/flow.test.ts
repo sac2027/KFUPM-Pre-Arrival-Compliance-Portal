@@ -16,7 +16,7 @@ const at = (over: Partial<FlowState>): FlowState => ({ ...initialFlowState, ...o
 
 describe('flowReducer', () => {
   it('starts at login with nothing set', () => {
-    expect(initialFlowState).toEqual({ step: 'login', session: null, acceptedTermIds: [], receipt: null, signature: null, document: null });
+    expect(initialFlowState).toEqual({ step: 'login', session: null, acceptedTermIds: [], receipt: null, signature: null, document: null, loginNotice: null });
   });
 
   it('moves to terms after login and keeps the session', () => {
@@ -77,6 +77,32 @@ describe('flowReducer', () => {
     expect(s.session).toBeNull();
     expect(s.acceptedTermIds).toEqual(all);
     expect(flowReducer(initialFlowState, { type: 'sessionExpired' })).toBe(initialFlowState);
+  });
+
+  it('goto moves only along allowed edges: sign→terms, terms→login (keeps the ticks, drops the session); never from done', () => {
+    const sign = at({ step: 'sign', session, acceptedTermIds: all });
+    expect(flowReducer(sign, { type: 'goto', step: 'terms' }).step).toBe('terms');
+    const terms = at({ step: 'terms', session, acceptedTermIds: all.slice(0, 2) });
+    const back = flowReducer(terms, { type: 'goto', step: 'login' });
+    expect(back.step).toBe('login');
+    expect(back.session).toBeNull();
+    expect(back.acceptedTermIds).toEqual(all.slice(0, 2));
+    expect(flowReducer(at({ step: 'terms', session, acceptedTermIds: all.slice(0, 2) }), { type: 'goto', step: 'sign' }).step).toBe('terms'); // not with two ticks
+    expect(flowReducer(at({ step: 'terms', session, acceptedTermIds: all }), { type: 'goto', step: 'sign' }).step).toBe('sign'); // Forward works when all five stand
+    expect(back.loginNotice).toBe('changed');
+    const done = at({ step: 'done', session, acceptedTermIds: all, receipt: { id: 'r', referenceNumber: 'P', receivedAt: 'x' }, signature: { method: 'draw', dataUrl: 'd' }, document: { state: 'sent' } });
+    expect(flowReducer(done, { type: 'goto', step: 'sign' })).toBe(done);
+    expect(flowReducer(initialFlowState, { type: 'goto', step: 'terms' })).toBe(initialFlowState);
+  });
+
+  it('keeps tick progress in order while on the terms, and tells sign-in why the student is back', () => {
+    const terms = at({ step: 'terms', session });
+    const two = flowReducer(terms, { type: 'termsProgress', ids: ['reporting', 'saudi-laws'] });
+    expect(two.acceptedTermIds).toEqual(['saudi-laws', 'reporting']); // mandated order, not click order
+    expect(flowReducer(initialFlowState, { type: 'termsProgress', ids: all })).toBe(initialFlowState);
+    const expired = flowReducer(two, { type: 'sessionExpired' });
+    expect(expired.loginNotice).toBe('expired');
+    expect(flowReducer(expired, { type: 'loggedIn', session }).loginNotice).toBeNull();
   });
 
   it('reset wipes everything (the session and PII are dropped)', () => {

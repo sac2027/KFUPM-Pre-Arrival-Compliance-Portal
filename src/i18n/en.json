@@ -94,5 +94,10 @@
   "receipt.email.failed": "We could not email your copy to {email}. Your declaration is recorded; download it below or try sending again.",
   "receipt.email.retry": "Send the email again",
   "receipt.download": "Download PDF",
-  "sign.preparing": "Preparing your document…"
+  "sign.preparing": "Preparing your document…",
+  "terms.changeDetails": "Change my details",
+  "terms.leaveWarn": "Going back ends your verified sign-in. You will need to sign in again; the terms you have confirmed are kept.",
+  "terms.leaveConfirm": "Yes, sign in again",
+  "terms.leaveCancel": "Stay here",
+  "login.again": "Sign in again to continue. The terms you confirmed are kept."
 }
