@@ -97,8 +97,15 @@
   transform: scale(0.98);
 }
 
-.btn[aria-disabled='true'] {
+.btn[aria-busy='true'] {
   cursor: progress;
+}
+
+/* Inactive (not busy): still focusable, clearly not ready, text stays legible (turquoise on beige 5.63:1). */
+.btn[aria-disabled='true']:not([aria-busy='true']) {
+  background: var(--beige);
+  color: var(--turquoise);
+  cursor: not-allowed;
 }
 
 @media (prefers-reduced-motion: reduce) {

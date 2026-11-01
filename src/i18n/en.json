@@ -34,5 +34,12 @@
   "error.name": "Enter your full name (2–100 letters) as it appears on your passport.",
   "error.login": "We couldn't sign you in. Check your details and try again.",
   "error.network": "Can't reach the server. Check your connection and try again.",
-  "terms.heading": "Terms and responsibilities"
+  "terms.heading": "Terms and responsibilities",
+  "terms.lead": "Check each item to confirm you have read and agree to it.",
+  "terms.progress": "{n} of {total} confirmed",
+  "terms.continue": "Continue to signature",
+  "terms.incomplete": "Confirm all five terms to continue.",
+  "terms.declarant": "Full name",
+  "terms.date": "Date",
+  "a11y.newTab": "Opens in a new tab"
 }

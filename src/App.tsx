@@ -37,7 +37,13 @@ function Shell() {
           <p className="doc__intro">{doc.intro[locale]}</p>
           <StepPanel step={flow.step}>
             {flow.step === 'login' && <LoginScreen onLoggedIn={(session) => dispatch({ type: 'loggedIn', session })} />}
-            {flow.step === 'terms' && <TermsStep />}
+            {flow.step === 'terms' && flow.session && (
+              <TermsStep
+                session={flow.session}
+                initialAccepted={flow.acceptedTermIds}
+                onContinue={(ids) => dispatch({ type: 'termsAccepted', ids })}
+              />
+            )}
           </StepPanel>
         </article>
       </main>

@@ -95,3 +95,12 @@ describe('fonts', () => {
     expect(baseCss).toMatch(/input,[\s\S]*?textarea,[\s\S]*?select,[\s\S]*?button\s*\{[^}]*font-family:\s*var\(--font-body\)/);
   });
 });
+
+describe('format', () => {
+  it('fills {placeholders}, leaves unknown ones and plain strings untouched', async () => {
+    const { format } = await import('../../src/i18n/I18nProvider');
+    expect(format('{n} of {total} confirmed', { n: 3, total: 5 })).toBe('3 of 5 confirmed');
+    expect(format('{n} of {x}', { n: 1 })).toBe('1 of {x}');
+    expect(format('plain')).toBe('plain');
+  });
+});
