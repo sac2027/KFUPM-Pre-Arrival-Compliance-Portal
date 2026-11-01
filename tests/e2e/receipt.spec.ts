@@ -1,0 +1,136 @@
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { expect, test } from '@playwright/test';
+import type { Page } from '@playwright/test';
+
+type Locale = 'en' | 'ar';
+const L = (l: Locale) => ({
+  passport: l === 'en' ? 'Passport number' : 'رقم جواز السفر',
+  phone: l === 'en' ? 'Phone number' : 'رقم الهاتف',
+  name: l === 'en' ? 'Full name' : 'الاسم الكامل',
+  signin: l === 'en' ? 'Sign in' : 'تسجيل الدخول',
+  cont: l === 'en' ? 'Continue to signature' : 'المتابعة إلى التوقيع',
+  submit: l === 'en' ? 'Sign and submit' : 'وقّع وأرسل',
+  heading: l === 'en' ? 'Declaration submitted' : 'تم إرسال الإقرار',
+});
+
+async function toDone(page: Page, locale: Locale = 'en', fullName = locale === 'en' ? 'Mai Nguyễn' : 'محمد عبدالله') {
+  const s = L(locale);
+  await page.addInitScript((l) => localStorage.setItem('pacf.locale', l), locale);
+  await page.goto('/');
+  await page.getByLabel(s.passport).fill('N1234567');
+  await page.getByLabel(s.phone).fill('+966551234567');
+  await page.getByLabel(s.name).fill(fullName);
+  await page.getByRole('button', { name: s.signin }).click();
+  await page.locator('.term').first().waitFor();
+  for (let i = 0; i < 5; i++) await page.locator('.term').nth(i).locator('.term__title label').click();
+  await page.getByRole('button', { name: s.cont }).click();
+  const canvas = page.locator('canvas');
+  await canvas.scrollIntoViewIfNeeded();
+  const b = (await canvas.boundingBox())!;
+  await page.mouse.move(b.x + b.width * 0.1, b.y + b.height * 0.6);
+  await page.mouse.down();
+  await page.mouse.move(b.x + b.width * 0.35, b.y + b.height * 0.2, { steps: 10 });
+  await page.mouse.move(b.x + b.width * 0.6, b.y + b.height * 0.7, { steps: 10 });
+  await page.mouse.move(b.x + b.width * 0.9, b.y + b.height * 0.3, { steps: 10 });
+  await page.mouse.up();
+  await page.getByRole('button', { name: s.submit }).click();
+  await expect(page.getByRole('heading', { level: 2, name: s.heading })).toBeFocused({ timeout: 8000 });
+  await page.evaluate(() => document.fonts.ready);
+}
+
+const REF = /^PACF-\d{4}-[A-HJ-NP-Z2-9]{6}$/;
+
+test('shows the receipt with a reference number and moves to Done', async ({ page }) => {
+  await toDone(page);
+  await expect(page.locator('.stepper [aria-current="step"]').first()).toContainText('Done');
+  const ref = (await page.locator('.receipt__ref').textContent())!;
+  expect(ref).toMatch(REF);
+  await expect(page.getByRole('button', { name: 'Print or save as PDF' })).toBeVisible();
+});
+
+test('leaves no personal data in the URL or browser storage, and Finish wipes the page', async ({ page }) => {
+  await toDone(page);
+  const leaks = await page.evaluate(() => ({
+    url: location.href,
+    local: Object.keys(localStorage),
+    session: Object.keys(sessionStorage),
+    cookie: document.cookie,
+  }));
+  expect(new URL(leaks.url).search + new URL(leaks.url).hash).toBe('');
+  expect(leaks.local).toEqual(['pacf.locale']);
+  expect(leaks.session).toEqual([]);
+  expect(leaks.cookie).toBe('');
+
+  await page.getByRole('button', { name: 'Finish and clear my details' }).click();
+  await expect(page.getByRole('alert')).toContainText('Print or save it first'); // one click does not destroy the declaration
+  await expect(page.getByRole('button', { name: 'Yes, clear my details' })).toBeFocused();
+  await page.getByRole('button', { name: 'Yes, clear my details' }).click();
+  await expect(page.getByRole('heading', { level: 2, name: 'Sign in' })).toBeVisible();
+  await expect(page.getByLabel('Passport number')).toHaveValue('');
+  await expect(page.getByLabel('Full name')).toHaveValue('');
+  const body = await page.evaluate(() => document.body.innerHTML);
+  for (const secret of ['N1234567', '+966551234567', 'Mai Nguyễn', 'data:image/png']) expect(body).not.toContain(secret);
+  await expect(page.locator('.stepper [aria-current="step"]').first()).toContainText('Sign in');
+});
+
+test('print media shows only the formal declaration, with letterhead, seal and Matrix loaded', async ({ page }) => {
+  await toDone(page);
+  await page.emulateMedia({ media: 'print' });
+  for (const hidden of ['.masthead', '.stepper', '.receipt', '.page__footer']) await expect(page.locator(hidden).first()).toBeHidden();
+  const sheet = page.locator('.print-sheet');
+  await expect(sheet).toBeVisible();
+  for (const img of await sheet.locator('img').all()) {
+    expect(await img.evaluate((e: HTMLImageElement) => e.complete && e.naturalWidth > 0)).toBe(true);
+  }
+  expect(await sheet.locator('.print-sheet__band').evaluate((e) => getComputedStyle(e).backgroundImage)).toContain('matrix-beige-sand.svg');
+  await expect(sheet).not.toContainText('N1234567');
+  await expect(sheet).toContainText('4567');
+});
+
+test('the receipt fits at this width, in both languages', async ({ page }, info) => {
+  void info;
+  await toDone(page, 'ar', 'م'.repeat(100));
+  const r = await page.evaluate(() => {
+    const w = document.documentElement.clientWidth;
+    const escapes = [...document.querySelectorAll('body *')]
+      .filter((el) => {
+        const b = el.getBoundingClientRect();
+        return b.width > 0 && getComputedStyle(el).position !== 'absolute' && (b.left < -0.5 || b.right > w + 0.5);
+      })
+      .map((el) => `${el.tagName}.${el.className}`);
+    return { overflow: document.documentElement.scrollWidth - innerWidth, escapes };
+  });
+  expect(r).toEqual({ overflow: 0, escapes: [] });
+});
+
+for (const locale of ['en', 'ar'] as const) {
+  test(`saves a real PDF that carries the declaration and none of the screen chrome (${locale})`, async ({ page }, info) => {
+    test.skip(info.project.name !== 'desktop-1280', 'PDF output does not depend on the viewport');
+    await toDone(page, locale);
+    const ref = (await page.locator('.receipt__ref').textContent())!;
+    await page.emulateMedia({ media: 'print' });
+    const dir = mkdtempSync(join(tmpdir(), 'pacf-'));
+    const file = join(dir, `declaration-${locale}.pdf`);
+    writeFileSync(file, await page.pdf({ format: 'A4', printBackground: true, preferCSSPageSize: true }));
+    const text = execFileSync('pdftotext', ['-layout', file, '-'], { encoding: 'utf8' });
+    const pages = Number(/Pages:\s+(\d+)/.exec(execFileSync('pdfinfo', [file], { encoding: 'utf8' }))![1]);
+    expect(pages).toBeLessThanOrEqual(2);
+    expect(text).toContain(ref);
+    expect(text).toContain('KFUPM-INTL-PACF');
+    expect(text).toContain('4567');
+    expect(text).not.toContain('N1234567');
+    expect(text).not.toContain('+966551234567');
+    for (const chrome of ['Continue to signature', 'Print or save as PDF', 'Pre-Arrival Onboarding Portal']) expect(text).not.toContain(chrome);
+    if (locale === 'en') {
+      expect(text).toContain('Pre-Arrival Compliance Form for International Students');
+      expect(text).toContain('Compliance with Saudi Laws and Regulations');
+      expect(text).toContain('Reporting and Understanding Consequences');
+      expect(text).toContain('Mai Nguyễn');
+    }
+    // Optional: keep the PDFs for a human to look at (PACF_PDF_OUT=/some/dir npm run test:e2e).
+    if (process.env.PACF_PDF_OUT) execFileSync('cp', [file, `${process.env.PACF_PDF_OUT}/`]);
+  });
+}
