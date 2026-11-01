@@ -47,3 +47,17 @@ languages (`tests/e2e/a11y.spec.ts`), and a keyboard-only walk of the whole flow
   space is the capped height (8 rem), so there is no layout shift to prevent.
 - **URL reflecting the step.** The step is not in the URL on purpose: nothing about a student's progress should be in a
   link or history entry (see the open decision about Back in `docs/qa/break-ui.md`).
+
+## Phase 2 (2026-11-02)
+
+Re-audited after the redesign and the real services: axe-core 0 violations on every step in both languages, including
+the new email field, the change-details and clear-details confirmations, the email-status line and its retry; the
+keyboard-only walk now covers four fields and the two confirmations. The design linter reports 0 FAIL / 0 WARN; the
+inspector 0 FAIL at 1440 / 768 / 390 (its one warning, the centred sheet leaving the sides free, is the design).
+
+Fixed in this phase: the masthead lost the Matrix strip and the location line (the user's request and the brand guide's
+"use selectively"); the title is a centred, ruled title; icons accompany every action with a text label (never alone);
+directional icons are chosen per writing direction instead of mirrored; the lockup's optical margin no longer leaves the
+screen on phones; large-text layouts no longer squeeze the term titles (see `docs/qa/break-ui.md` #11).
+
+Deliberately kept: sentence case; square corners; the brand's turquoise bar (an institutional bar, not an app sidebar).

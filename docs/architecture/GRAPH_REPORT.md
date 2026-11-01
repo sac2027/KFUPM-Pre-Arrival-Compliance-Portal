@@ -1,103 +1,119 @@
-# Graph Report - src  (2026-11-01)
+# Graph Report - KFUPM-Pre-Arrival-Compliance-Portal  (2026-11-01)
 
 ## Corpus Check
-- Corpus is ~11,386 words - fits in a single context window. You may not need a graph.
+- Corpus is ~14,261 words - fits in a single context window. You may not need a graph.
 
 ## Summary
-- 189 nodes · 454 edges · 10 communities (8 shown, 2 thin omitted)
+- 341 nodes · 820 edges · 12 communities (11 shown, 1 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 2 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
-- Signature step (draw, upload, buttons)
-- Login form and input validation
-- Receipt and printable declaration
-- Policy terms (JSON, loader, term cards)
-- App shell and step flow
-- Mock services and dev stress hooks
-- Language and i18n
-- Entry point and stylesheets
-- Colour palette and contrast rules
-- Contrast calculation
+- Receipt, PDF and print
+- Signature step
+- Documents and email (API)
+- App shell, flow and history
+- Policy terms
+- Sign-in verification (API)
+- Other: signature.ts, assessImage(), ImageVerdict
+- Login form and validation
+- Other: tsconfig.json, compilerOptions, lib
+- Other: functions/lib/terms.ts, TERM_IDS, TermId
+- Colour and contrast
+- Colour and contrast
 
 ## God Nodes (most connected - your core abstractions)
-1. `useI18n()` - 27 edges
-2. `Shell()` - 13 edges
-3. `Button()` - 13 edges
-4. `isWorstCase()` - 9 edges
-5. `I18nProvider()` - 8 edges
-6. `TermId` - 8 edges
-7. `Session` - 8 edges
-8. `LoginScreen()` - 7 edges
-9. `PrintSheet()` - 7 edges
-10. `ReceiptScreen()` - 7 edges
+1. `useI18n()` - 31 edges
+2. `Icon()` - 18 edges
+3. `Shell()` - 15 edges
+4. `Button()` - 15 edges
+5. `error()` - 13 edges
+6. `compilerOptions` - 13 edges
+7. `ServiceError` - 12 edges
+8. `onRequestPost` - 12 edges
+9. `json()` - 12 edges
+10. `requireSession()` - 11 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `Shell()` --indirect_call--> `flowReducer()`  [INFERRED]
-  App.tsx → state/flow.ts
+- `parseRosterCsv()` --calls--> `normalisePassport()`  [EXTRACTED]
+  scripts/lib/roster.ts → functions/lib/match.ts
+- `parseRosterCsv()` --calls--> `normalisePhone()`  [EXTRACTED]
+  scripts/lib/roster.ts → functions/lib/match.ts
+- `parseRosterCsv()` --calls--> `normaliseEmail()`  [EXTRACTED]
+  scripts/lib/roster.ts → functions/lib/match.ts
+- `Shell()` --calls--> `Masthead()`  [EXTRACTED]
+  src/App.tsx → src/components/Masthead.tsx
 - `Shell()` --calls--> `LoginScreen()`  [EXTRACTED]
-  App.tsx → features/login/LoginScreen.tsx
-- `Shell()` --calls--> `SignatureStep()`  [EXTRACTED]
-  App.tsx → features/signature/SignatureStep.tsx
-- `App()` --calls--> `I18nProvider()`  [EXTRACTED]
-  App.tsx → i18n/I18nProvider.tsx
-- `LoginScreen()` --calls--> `Button()`  [EXTRACTED]
-  features/login/LoginScreen.tsx → components/Button.tsx
+  src/App.tsx → src/features/login/LoginScreen.tsx
 
 ## Import Cycles
 - None detected.
 
-## Communities (10 total, 2 thin omitted)
+## Communities (12 total, 1 thin omitted)
 
-### Community 0 - "Signature step (draw, upload, buttons)"
-Cohesion: 0.12
-Nodes (24): Button(), DrawPad(), SignatureStep(), UploadZone(), MessageKey, assessImage(), ImageVerdict, inkRatio() (+16 more)
+### Community 0 - "Receipt, PDF and print"
+Cohesion: 0.07
+Nodes (42): failed, shouldFailOnce(), Plain(), PrintSheet(), TERMS, lazyRenderPdf(), formatDate(), formatDateTime() (+34 more)
 
-### Community 1 - "Login form and input validation"
-Cohesion: 0.13
-Nodes (18): Field(), FieldProps, LoginScreen(), resolver(), asciiDigits(), normaliseDigits(), stripAllInvisible(), stripInvisible() (+10 more)
+### Community 1 - "Signature step"
+Cohesion: 0.10
+Nodes (35): Button(), Field(), FieldProps, DIRECTIONAL, Icon(), IconName, ICONS, LanguageToggle() (+27 more)
 
-### Community 2 - "Receipt and printable declaration"
-Cohesion: 0.17
-Nodes (21): Plain(), PrintSheet(), TERMS, formatDate(), formatDateTime(), maskPassport(), tag(), Locale (+13 more)
-
-### Community 3 - "Policy terms (JSON, loader, term cards)"
+### Community 2 - "Documents and email (API)"
 Cohesion: 0.14
-Nodes (16): Body(), TermCard(), TERMS, loadTerms(), bilingual, body, ComplianceTerms, link (+8 more)
+Nodes (32): onRequestGet, onRequestPut, ownRecord(), onRequestGet, onRequestPost, onRequestPost, RosterRow, attachmentName() (+24 more)
 
-### Community 4 - "App shell and step flow"
-Cohesion: 0.20
-Nodes (15): App(), Shell(), TERMS, LanguageToggle(), Masthead(), StepPanel(), Stepper(), WorstCaseToggle() (+7 more)
+### Community 3 - "App shell, flow and history"
+Cohesion: 0.09
+Nodes (18): App(), Shell(), TERMS, StepPanel(), Stepper(), isWorstCase(), WorstCaseToggle(), currentHashStep() (+10 more)
 
-### Community 5 - "Mock services and dev stress hooks"
+### Community 4 - "Policy terms"
+Cohesion: 0.07
+Nodes (23): env, list, local, raw, [file, ...flags], remote, { rows, errors }, file (+15 more)
+
+### Community 5 - "Sign-in verification (API)"
+Cohesion: 0.13
+Nodes (28): RFC-4180, NO_MATCH, onRequestPost, enc, signSession(), asciiDigits(), nameKey(), namesMatch() (+20 more)
+
+### Community 6 - "Other: signature.ts, assessImage(), ImageVerdict"
+Cohesion: 0.13
+Nodes (18): assessImage(), ImageVerdict, inkRatio(), MAX_SIGNATURE_BYTES, MAX_UPLOAD_HEIGHT, MAX_UPLOAD_WIDTH, MIN_INK_RATIO, MIN_STROKE_LENGTH (+10 more)
+
+### Community 7 - "Login form and validation"
 Cohesion: 0.22
-Nodes (14): failed, isWorstCase(), shouldFailOnce(), WORST_FULL_NAME, WORST_REFERENCE, createMockAuthService(), assertValid(), createMockDbService() (+6 more)
+Nodes (13): asciiDigits(), normaliseDigits(), stripAllInvisible(), stripInvisible(), trimJoiners(), emailSchema, LoginInput, LoginOutput (+5 more)
 
-### Community 6 - "Language and i18n"
-Cohesion: 0.18
-Nodes (12): detectLocale(), DICTS, Dir, format(), I18nContext, I18nProvider(), I18nValue, Locale (+4 more)
+### Community 8 - "Other: tsconfig.json, compilerOptions, lib"
+Cohesion: 0.13
+Nodes (14): compilerOptions, lib, module, moduleResolution, noEmit, noUncheckedIndexedAccess, noUnusedLocals, noUnusedParameters (+6 more)
 
-### Community 8 - "Colour palette and contrast rules"
+### Community 9 - "Other: functions/lib/terms.ts, TERM_IDS, TermId"
+Cohesion: 0.31
+Nodes (8): TERM_IDS, TermId, decodeDataUrl(), MAX_SIGNATURE_BYTES, parseSubmissionBody(), sniffImage(), SubmissionInput, ValidationResult
+
+### Community 10 - "Colour and contrast"
 Cohesion: 0.29
 Nodes (6): ColorName, Pairing, PAIRINGS, PALETTE, THRESHOLD, Use
 
 ## Knowledge Gaps
-- **2 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **1 isolated node(s):** `RFC-4180`
+  These have ≤1 connection - possible missing edges. (Counts symbols only; 121 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **1 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `useI18n()` connect `App shell and step flow` to `Signature step (draw, upload, buttons)`, `Login form and input validation`, `Receipt and printable declaration`, `Policy terms (JSON, loader, term cards)`, `Language and i18n`?**
-  _High betweenness centrality (0.095) - this node is a cross-community bridge._
-- **Should `Signature step (draw, upload, buttons)` be split into smaller, more focused modules?**
-  _Cohesion score 0.11931818181818182 - nodes in this community are weakly interconnected._
-- **Why does `AuthService` connect `Login form and input validation` to `Receipt and printable declaration`, `Mock services and dev stress hooks`?**
-  _High betweenness centrality (0.020) - this node is a cross-community bridge._
-- **Should `Login form and input validation` be split into smaller, more focused modules?**
-  _Cohesion score 0.12615384615384614 - nodes in this community are weakly interconnected._
-- **Why does `Button()` connect `Signature step (draw, upload, buttons)` to `Login form and input validation`, `Receipt and printable declaration`, `Policy terms (JSON, loader, term cards)`, `App shell and step flow`?**
-  _High betweenness centrality (0.019) - this node is a cross-community bridge._
-- **Should `Policy terms (JSON, loader, term cards)` be split into smaller, more focused modules?**
-  _Cohesion score 0.1383399209486166 - nodes in this community are weakly interconnected._
-- **Should `Entry point and stylesheets` be split into smaller, more focused modules?**
+- **Why does `parseRosterCsv()` connect `Sign-in verification (API)` to `Policy terms`?**
+  _High betweenness centrality (0.139) - this node is a cross-community bridge._
+- **What connects `RFC-4180` to the rest of the system?**
+  _1 weakly-connected nodes found - possible missing edges._
+- **Should `Receipt, PDF and print` be split into smaller, more focused modules?**
+  _Cohesion score 0.0662004662004662 - nodes in this community are weakly interconnected._
+- **Should `Signature step` be split into smaller, more focused modules?**
+  _Cohesion score 0.09993011879804332 - nodes in this community are weakly interconnected._
+- **Should `Documents and email (API)` be split into smaller, more focused modules?**
   _Cohesion score 0.14285714285714285 - nodes in this community are weakly interconnected._
+- **Should `App shell, flow and history` be split into smaller, more focused modules?**
+  _Cohesion score 0.08708708708708708 - nodes in this community are weakly interconnected._
+- **Should `Policy terms` be split into smaller, more focused modules?**
+  _Cohesion score 0.06984126984126984 - nodes in this community are weakly interconnected._
