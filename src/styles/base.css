@@ -18,7 +18,7 @@ body {
   font-size: 1rem;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere; /* break-word would still let the longest word force a grid column wider than the screen */
 }
 
 input,
@@ -56,6 +56,23 @@ h3 {
   text-wrap: balance;
 }
 
+/* Every one-column grid may shrink below its content's minimum width. */
+.login,
+.terms,
+.sign,
+.receipt,
+.form,
+.field,
+.tabs,
+.pad,
+.upload,
+.terms__list,
+.terms__progress,
+.terms__actions,
+.doc__head {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 img,
 svg,
 canvas {
@@ -68,6 +85,7 @@ a {
 }
 
 :root {
+  color-scheme: light; /* brand surfaces are light-only: stop OS "force dark" from inverting the form */
   accent-color: var(--turquoise);
 }
 
@@ -100,6 +118,19 @@ textarea {
 /* Step headings take programmatic focus (not tab stops), so they carry no ring. */
 [data-step-heading]:focus {
   outline: none;
+}
+
+.noscript {
+  max-inline-size: 40rem;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background: var(--white);
+  color: var(--ink);
+  border: 2px solid var(--turquoise);
+}
+
+.noscript p {
+  margin: 0 0 0.75rem;
 }
 
 .sr-only {

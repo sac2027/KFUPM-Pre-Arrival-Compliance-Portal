@@ -220,6 +220,7 @@ docs/HANDOFF.md                    what IT replaces, what staff edit
 
 **Files:** Create `src/dev/WorstCaseToggle.tsx`; modify offending components; Test `tests/e2e/worst-case.spec.ts`
 
+- [ ] **Step 0 (as built):** the break-ui skill's workflow ran against a dev-only `?data=worst` toggle; findings, fixes and open decisions are in `docs/qa/break-ui.md`. The worst-case Playwright projects run against the dev server (`worst-1280/360/320`).
 - [ ] **Step 1: Write failing e2e:** with worst-case data (120-char Arabic name, 100-char unbroken Latin name, 20-char passport, `+` phone with 18 digits, 500-char term bodies, emoji) at 320 px: `document.documentElement.scrollWidth <= innerWidth` on every step, in both locales.
 - [ ] **Step 2:** Run → FAIL (expected).
 - [ ] **Step 3:** Load **break-ui**; fix with `overflow-wrap:anywhere`, `min-width:0` on flex/grid children, `text-wrap: balance/pretty`, container-width clamps. Toggle exists only when `import.meta.env.DEV`.

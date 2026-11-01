@@ -7,6 +7,7 @@ export function formatDate(iso: string, locale: Locale, timeZone?: string): stri
   return new Intl.DateTimeFormat(tag(locale), { day: 'numeric', month: 'long', year: 'numeric', timeZone }).format(new Date(iso));
 }
 
+/** Date and 24-hour time, ending in the time zone (e.g. `13:15 GMT+3`). */
 export function formatDateTime(iso: string, locale: Locale, timeZone?: string): string {
   return new Intl.DateTimeFormat(tag(locale), {
     day: 'numeric',
@@ -15,6 +16,7 @@ export function formatDateTime(iso: string, locale: Locale, timeZone?: string): 
     hour: '2-digit',
     minute: '2-digit',
     hourCycle: 'h23',
+    timeZoneName: 'short', // the student may sign from anywhere: the zone makes the time unambiguous
     timeZone,
   }).format(new Date(iso));
 }

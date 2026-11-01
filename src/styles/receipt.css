@@ -46,6 +46,23 @@
   font-weight: 700;
   color: var(--turquoise);
   letter-spacing: 0.02em;
+  user-select: all; /* one click selects the whole reference, ready to copy */
+}
+
+/* Narrow screens: the label sits above its value, so a long reference gets the full width instead of a sliver. */
+@media (max-width: 30rem) {
+  .receipt__facts {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0.25rem;
+  }
+
+  .receipt__facts dd + dt {
+    margin-block-start: 0.75rem;
+  }
+
+  .receipt__ref {
+    font-size: 1.125rem;
+  }
 }
 
 .receipt__actions {

@@ -5,6 +5,7 @@
  *  - Reject with `new ServiceError('invalid_credentials', …)` when the student cannot be verified.
  *  - Never log, persist (localStorage/sessionStorage) or put credentials in a URL.
  */
+import { isWorstCase, WORST_FULL_NAME } from '../dev/worstCase';
 import { DEFAULT_LATENCY_MS, simulate } from './mockUtils';
 import type { MockOptions } from './mockUtils';
 import { ServiceError } from './types';
@@ -18,7 +19,8 @@ export function createMockAuthService(opts: MockOptions = {}): AuthService {
         if (blank) throw new ServiceError('invalid_credentials', 'All three fields are required.');
         return {
           sessionId: crypto.randomUUID(),
-          student: { ...credentials },
+          // dev only: a real SSO may return a longer name than the form allows (stress data)
+          student: import.meta.env.DEV && isWorstCase() ? { ...credentials, fullName: WORST_FULL_NAME } : { ...credentials },
           issuedAt: new Date().toISOString(),
         };
       });

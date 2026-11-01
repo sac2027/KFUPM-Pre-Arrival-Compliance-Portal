@@ -100,13 +100,20 @@ test('Continue is inactive until all five are confirmed, then advances to the si
   await expect(page.locator('.stepper [aria-current="step"]').first()).toContainText('Sign');
 });
 
-test('the progress meter stays in view while scrolling through the terms', async ({ page }) => {
+test('the progress meter stays in view on tall screens, and gets out of the way on short ones', async ({ page }) => {
   await toTerms(page);
+  const tall = page.viewportSize()!.height > 700;
+  const position = await page.locator('.terms__progress').evaluate((e) => getComputedStyle(e).position);
+  expect(position).toBe(tall ? 'sticky' : 'static'); // short screens: a sticky bar would hide the term being read
   await page.locator('.term').nth(3).scrollIntoViewIfNeeded();
   await page.evaluate(() => window.scrollBy(0, 300));
   const top = await page.locator('.terms__progress').evaluate((e) => e.getBoundingClientRect().top);
-  expect(top).toBeGreaterThanOrEqual(-1);
-  expect(top).toBeLessThan(2);
+  if (tall) {
+    expect(top).toBeGreaterThanOrEqual(-1);
+    expect(top).toBeLessThan(2);
+  } else {
+    expect(top).toBeLessThan(0); // it scrolled away with the page
+  }
 });
 
 for (const locale of ['en', 'ar'] as const) {

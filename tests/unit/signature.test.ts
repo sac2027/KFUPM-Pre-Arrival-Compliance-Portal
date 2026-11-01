@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  assessImage,
+  inkRatio,
   MAX_SIGNATURE_BYTES,
   MIN_STROKE_LENGTH,
   sniffImageType,
@@ -62,4 +64,28 @@ describe('strokeLength', () => {
     expect(totalStrokeLength(real)).toBeGreaterThanOrEqual(MIN_STROKE_LENGTH);
     expect(MIN_STROKE_LENGTH).toBe(40);
   });
+});
+
+describe('inkRatio and assessImage: a blank or tiny image is not a signature', () => {
+  const px = (r: number, g: number, b: number, a = 255) => [r, g, b, a];
+  const image = (n: number, dark: number) =>
+    new Uint8ClampedArray([...Array.from({ length: dark }, () => px(0, 0, 0)).flat(), ...Array.from({ length: n - dark }, () => px(255, 255, 255)).flat()]);
+
+  it('measures the share of non-white pixels', () => {
+    expect(inkRatio(image(100, 0))).toBe(0);
+    expect(inkRatio(image(100, 5))).toBeCloseTo(0.05, 5);
+    expect(inkRatio(image(100, 100))).toBe(1);
+  });
+  it('treats near-white scanner noise as paper, not ink', () => {
+    expect(inkRatio(new Uint8ClampedArray([...px(250, 250, 250), ...px(245, 246, 247)]))).toBe(0);
+  });
+  it('accepts a normal signature photo', () => {
+    expect(assessImage({ width: 900, height: 300, ink: 0.02 })).toBe('ok');
+  });
+  it.each([
+    [{ width: 1, height: 1, ink: 1 }, 'small'],
+    [{ width: 40, height: 15, ink: 0.3 }, 'small'],
+    [{ width: 900, height: 300, ink: 0 }, 'blank'],
+    [{ width: 900, height: 300, ink: 0.00001 }, 'blank'],
+  ])('%j is %s', (input, verdict) => expect(assessImage(input)).toBe(verdict));
 });

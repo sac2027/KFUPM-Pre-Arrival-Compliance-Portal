@@ -20,6 +20,18 @@ for (const [id, l] of Object.entries(terms.links)) {
 for (const loc of ['en', 'ar'] as const) {
   if (terms.meta.reviewStatus[loc] !== 'approved') warnings.push(`${loc.toUpperCase()} text is "${terms.meta.reviewStatus[loc]}"`);
 }
+const MAX_TITLE = 110;
+const MAX_BODY = 1200;
+for (const t of terms.terms) {
+  for (const loc of ['en', 'ar'] as const) {
+    const body = t.body[loc].map((s) => ('text' in s ? s.text : 'strong' in s ? s.strong : (terms.links[s.linkId]?.label[loc] ?? ''))).join('');
+    if (t.title[loc].length > MAX_TITLE) warnings.push(`term "${t.id}" ${loc} title is ${t.title[loc].length} characters (over ${MAX_TITLE}): it will wrap to many lines on phones`);
+    if (body.length > MAX_BODY) warnings.push(`term "${t.id}" ${loc} text is ${body.length} characters (over ${MAX_BODY}): the printed declaration may run past one page`);
+  }
+}
+for (const [id, l] of Object.entries(terms.links)) {
+  if (l.url.length > 500) warnings.push(`link "${id}" URL is ${l.url.length} characters`);
+}
 if (warnings.length) {
   console.warn(`\n⚠ ${warnings.length} item(s) to resolve before launch:`);
   for (const w of warnings) console.warn(`  - ${w}`);

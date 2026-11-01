@@ -4,7 +4,7 @@
  * reaches authService is clean.
  */
 import * as v from 'valibot';
-import { normaliseDigits, stripInvisible } from './normalise';
+import { normaliseDigits, stripInvisible, trimJoiners } from './normalise';
 
 export const NAME_MAX = 100;
 
@@ -22,12 +22,16 @@ export const phoneSchema = v.pipe(
   v.regex(/^\+?\d{7,15}$/, 'error.phone'),
 );
 
-/** Unicode letters and marks (Arabic, Latin with diacritics, Urdu…) plus space, apostrophes, period, hyphen. */
-const NAME_CHARS = /^[\p{L}\p{M}][\p{L}\p{M} '’ʼ.-]*$/u;
+/**
+ * Unicode letters and marks (Arabic, Latin with diacritics, Urdu, CJK, Thai…), plus space, apostrophes,
+ * period, hyphen, the middle dots used when transliterating names (U+00B7, U+30FB) and the zero-width
+ * (non-)joiners that belong to the spelling of many names (never first or last).
+ */
+const NAME_CHARS = /^[\p{L}\p{M}](?:[\p{L}\p{M} '’ʼ.\u00B7\u30FB-]|\u200C|\u200D)*$/u;
 
 export const nameSchema = v.pipe(
   v.string(),
-  v.transform((s) => stripInvisible(s).replace(/\s+/g, ' ').trim()),
+  v.transform((s) => trimJoiners(stripInvisible(s).replace(/\s+/g, ' ').trim())),
   v.nonEmpty('error.required'),
   v.regex(NAME_CHARS, 'error.name'),
   v.check((s) => [...s].filter((c) => /\p{L}/u.test(c)).length >= 2, 'error.name'),

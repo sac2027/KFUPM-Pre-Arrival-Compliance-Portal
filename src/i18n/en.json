@@ -76,5 +76,7 @@
   "print.passport": "Passport number",
   "print.signature": "Signature",
   "print.signedOn": "Signed on",
-  "print.sealAlt": "KFUPM seal"
+  "print.sealAlt": "KFUPM seal",
+  "error.sig.small": "That image is too small to be a signature. Upload a larger photo.",
+  "error.sig.blank": "That image looks blank. Upload a photo or scan with your signature in dark ink."
 }

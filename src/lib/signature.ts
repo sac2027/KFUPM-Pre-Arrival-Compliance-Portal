@@ -3,6 +3,12 @@ export const MAX_SIGNATURE_BYTES = 2 * 1024 * 1024;
 export const MIN_STROKE_LENGTH = 40;
 /** Uploaded images are downscaled to this width before submission (also strips EXIF and other metadata). */
 export const MAX_UPLOAD_WIDTH = 900;
+export const MAX_UPLOAD_HEIGHT = 400;
+/** Below this a picture cannot be a photo of a signature. */
+export const MIN_UPLOAD_WIDTH = 60;
+export const MIN_UPLOAD_HEIGHT = 20;
+/** Share of non-white pixels below which an image is treated as blank. */
+export const MIN_INK_RATIO = 0.0005;
 
 export type SignatureFileProblem = 'type' | 'size' | 'empty';
 
@@ -46,22 +52,55 @@ export function totalStrokeLength(strokes: ReadonlyArray<readonly Point[]>): num
   return strokes.reduce((sum, s) => sum + strokeLength(s), 0);
 }
 
+/** Share of pixels that are not (near-)white in RGBA data already composited on white. */
+export function inkRatio(rgba: Uint8ClampedArray): number {
+  const pixels = rgba.length / 4;
+  if (pixels === 0) return 0;
+  let ink = 0;
+  for (let i = 0; i < rgba.length; i += 4) {
+    if ((rgba[i]! + rgba[i + 1]! + rgba[i + 2]!) / 3 < 215) ink++;
+  }
+  return ink / pixels;
+}
+
+export type ImageVerdict = 'ok' | 'small' | 'blank';
+
+/** A 1×1 pixel, a white page, or white ink on a transparent ground are not signatures. */
+export function assessImage({ width, height, ink }: { width: number; height: number; ink: number }): ImageVerdict {
+  if (width < MIN_UPLOAD_WIDTH || height < MIN_UPLOAD_HEIGHT) return 'small';
+  if (ink < MIN_INK_RATIO) return 'blank';
+  return 'ok';
+}
+
+export class SignatureImageError extends Error {
+  readonly reason: 'small' | 'blank';
+  constructor(reason: 'small' | 'blank') {
+    super(`signature image is ${reason}`);
+    this.name = 'SignatureImageError';
+    this.reason = reason;
+  }
+}
+
 /**
  * Decodes an uploaded image and re-encodes it as PNG on a white ground, downscaled. This drops metadata
- * (EXIF/GPS) and proves the file really is a decodable image. Browser only.
+ * (EXIF/GPS), proves the file really is a decodable image, and rejects pictures that are too small or
+ * blank to be a signature. Browser only.
  */
 export async function rasteriseImage(file: Blob): Promise<string> {
   const bitmap = await createImageBitmap(file);
   try {
-    const scale = Math.min(1, MAX_UPLOAD_WIDTH / bitmap.width);
+    if (assessImage({ width: bitmap.width, height: bitmap.height, ink: 1 }) === 'small') throw new SignatureImageError('small');
+    const scale = Math.min(1, MAX_UPLOAD_WIDTH / bitmap.width, MAX_UPLOAD_HEIGHT / bitmap.height);
     const canvas = document.createElement('canvas');
     canvas.width = Math.max(1, Math.round(bitmap.width * scale));
     canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) throw new Error('canvas unavailable');
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const ink = inkRatio(ctx.getImageData(0, 0, canvas.width, canvas.height).data);
+    if (assessImage({ width: bitmap.width, height: bitmap.height, ink }) === 'blank') throw new SignatureImageError('blank');
     return canvas.toDataURL('image/png');
   } finally {
     bitmap.close();

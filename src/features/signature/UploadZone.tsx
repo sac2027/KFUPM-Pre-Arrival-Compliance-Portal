@@ -3,7 +3,7 @@ import type { ChangeEvent, DragEvent } from 'react';
 import { Button } from '../../components/Button';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { MessageKey } from '../../i18n/I18nProvider';
-import { rasteriseImage, sniffImageType, validateSignatureFile } from '../../lib/signature';
+import { rasteriseImage, SignatureImageError, sniffImageType, validateSignatureFile } from '../../lib/signature';
 
 /** Drag-and-drop or choose a file. Checks the claimed type and size, then the real bytes, then re-encodes. */
 export function UploadZone({
@@ -34,8 +34,8 @@ export function UploadZone({
       const dataUrl = await process(file);
       setPreview(dataUrl);
       onChange(dataUrl);
-    } catch {
-      reject('error.sig.read');
+    } catch (err) {
+      reject(err instanceof SignatureImageError ? (`error.sig.${err.reason}` as MessageKey) : 'error.sig.read');
     }
   };
 

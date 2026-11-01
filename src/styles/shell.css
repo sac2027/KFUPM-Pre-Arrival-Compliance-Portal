@@ -6,8 +6,9 @@
 
 .masthead__bar {
   display: flex;
+  flex-wrap: wrap; /* enlarged text must wrap the toggle below the logo, not push the page wider */
   align-items: center;
-  gap: 1.5rem;
+  gap: 0.5rem 1.5rem;
   inline-size: min(100% - 2rem, 72rem);
   margin-inline: auto;
   padding-block: 0.5rem;

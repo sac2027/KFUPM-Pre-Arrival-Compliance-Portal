@@ -77,7 +77,7 @@
 
 .btn {
   justify-self: start;
-  min-inline-size: 11rem; /* "Sign in" and "Signing in…" occupy the same width */
+  min-inline-size: min(11rem, 100%); /* "Sign in" and "Signing in…" occupy the same width; never wider than the screen */
   min-block-size: 3rem;
   padding-inline: 1.75rem;
   background: var(--turquoise);

@@ -10,6 +10,7 @@ import './styles/terms.css';
 import './styles/signature.css';
 import './styles/receipt.css';
 import './styles/print.css';
+import './styles/a11y.css';
 import './styles/motion.css';
 
 const root = document.getElementById('root');

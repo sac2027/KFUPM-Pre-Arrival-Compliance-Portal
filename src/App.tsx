@@ -1,5 +1,6 @@
 import { useReducer } from 'react';
 import { Masthead } from './components/Masthead';
+import { WorstCaseToggle } from './dev/WorstCaseToggle';
 import { StepPanel } from './components/StepPanel';
 import { Stepper } from './components/Stepper';
 import { LoginScreen } from './features/login/LoginScreen';
@@ -79,6 +80,7 @@ function Shell() {
           </StepPanel>
         </article>
       </main>
+      {import.meta.env.DEV && <WorstCaseToggle />}
       <footer className="page__footer">
         <p>{t('app.org')}</p>
       </footer>

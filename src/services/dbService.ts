@@ -6,6 +6,7 @@
  *  - Encrypt passport/phone/name/signature at rest; never log the payload.
  *  - Return only `{ referenceNumber, receivedAt }`; do not echo PII back to the browser.
  */
+import { isWorstCase, WORST_REFERENCE } from '../dev/worstCase';
 import { TERM_IDS } from '../lib/termsSchema';
 import { DEFAULT_LATENCY_MS, randomCode, simulate } from './mockUtils';
 import type { MockOptions } from './mockUtils';
@@ -31,7 +32,8 @@ export function createMockDbService(opts: MockOptions = {}): DbService {
         assertValid(payload);
         const receivedAt = new Date().toISOString();
         return {
-          referenceNumber: `PACF-${receivedAt.slice(0, 4)}-${randomCode(6)}`,
+          referenceNumber:
+            import.meta.env.DEV && isWorstCase() ? WORST_REFERENCE : `PACF-${receivedAt.slice(0, 4)}-${randomCode(6)}`,
           receivedAt,
         };
       });

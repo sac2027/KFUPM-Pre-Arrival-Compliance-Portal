@@ -56,6 +56,29 @@ describe('name', () => {
   });
 });
 
+describe('names that real students have (break-ui)', () => {
+  const ZWNJ = String.fromCharCode(0x200c);
+  const ZWJ = String.fromCharCode(0x200d);
+  it('keeps the zero-width non-joiner, which is part of the spelling of Persian, Urdu, Kurdish and Pashto names', () => {
+    const name = 'نامه' + ZWNJ + 'ای احمدی';
+    expect(ok(nameSchema, name)).toBe(true);
+    expect(out(nameSchema, name)).toBe(name); // not silently respelled
+  });
+  it('keeps the zero-width joiner used in Malayalam and Sinhala names', () => {
+    const name = 'സന്ദീപ്' + ZWJ + ' കുമാർ';
+    expect(ok(nameSchema, name)).toBe(true);
+    expect(out(nameSchema, name)).toBe(name);
+  });
+  it('still strips the invisible characters used for spoofing (zero-width space, bidi controls, BOM)', () => {
+    expect(out(nameSchema, 'Mai' + String.fromCharCode(0x200b) + String.fromCharCode(0x202e) + ' Lee')).toBe('Mai Lee');
+  });
+  it('trims stray joiners at the edges', () => {
+    expect(out(nameSchema, ZWNJ + 'Mai Lee' + ZWJ)).toBe('Mai Lee');
+  });
+  it.each(['阿卜杜拉·本·穆罕默德', '王秀英', 'Ólafur Darri Ólafsson', 'Seán O' + String.fromCharCode(39) + 'Brien-Ó Súilleabháin', 'María José de la Cruz y Fernández', 'ʿAbd al-Raḥmān ʾAḥmad', 'Jo', '  Sam   Lee '])('accepts %s', (n) => expect(ok(nameSchema, n)).toBe(true));
+  it.each(['🦊 Fox', '👩🏽‍💻 Priya', 'Mai ' + String.fromCharCode(60) + 'b' + String.fromCharCode(62), 'J'])('rejects %s with the name message', (n) => expect(msg(nameSchema, n)).toBe('error.name'));
+});
+
 describe('loginSchema', () => {
   it('returns normalised values for all three fields', () => {
     expect(v.parse(loginSchema, { passportNumber: 'a1234567', phoneNumber: '+966 55 123 4567', fullName: ' محمد  عبدالله ' })).toEqual({
