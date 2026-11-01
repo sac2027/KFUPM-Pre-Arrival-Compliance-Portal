@@ -239,6 +239,7 @@ docs/HANDOFF.md                    what IT replaces, what staff edit
 
 **Files:** `tests/e2e/{rtl-toggle,validation,submission,responsive}.spec.ts`
 
+- [ ] **Step 0 (as built):** the skill's patterns were applied to the existing `@playwright/test` suite (role/label locators, web-first assertions, no fixed sleeps or `waitForSelector`); its ad-hoc `run.js` executor was not used because it would reinstall Playwright. Failure injection is dev-only (`?fail=login|submit`, projects `worst-*`); the width matrix is `tests/e2e/responsive.spec.ts`.
 - [ ] **Step 1:** Load **playwright-skill**. Specs: RTL toggle flips `dir`, mirrors the stepper and back/forward arrows, keeps font families (Plex Arabic computed); validation states for all three fields in both locales; full happy-path submission with draw and with upload; submission failure + retry (inject a failing `dbService` through a test-only query-flag-free hook, e.g. `window.__PACF_TEST__` set in `main.tsx` only in test mode); no-horizontal-scroll matrix at 320/360/768/1280/1920.
 - [ ] **Step 2:** Run `npx playwright test` → all PASS on desktop, 360 and 320 projects.
 - [ ] **Step 3: Commit** `test(e2e): rtl toggle, validation, submission and responsive suites`

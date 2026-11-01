@@ -49,7 +49,7 @@ export async function fillLogin(page: Page, locale: Locale, p: { passport: strin
 }
 
 export async function confirmAllTerms(page: Page, locale: Locale) {
-  await page.waitForSelector('.term');
+  await page.locator('.term').first().waitFor();
   for (let i = 0; i < 5; i++) await page.locator('.term').nth(i).locator('.term__title label').click();
   await page.getByRole('button', { name: L(locale).cont }).click();
   await expect(page.locator('#sign-heading')).toBeFocused();

@@ -100,7 +100,7 @@ test.describe('environments', () => {
     for (const c of [current, upcoming]) expect(c).not.toBe('rgba(0, 0, 0, 0)');
 
     await fillLogin(page, 'en', { ...GOOD, name: 'Mai Nguyễn' });
-    await page.waitForSelector('.term');
+    await page.locator('.term').first().waitFor();
     const box = (i: number) => page.locator('.term__box').nth(i).evaluate((e) => getComputedStyle(e).backgroundColor);
     const before = await box(0);
     await page.locator('.term').nth(0).locator('.term__title label').click();

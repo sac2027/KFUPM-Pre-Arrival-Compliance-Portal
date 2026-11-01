@@ -26,7 +26,7 @@ for (const locale of ['en', 'ar'] as const) {
     await scan(page, 'login with errors');
 
     await fillLogin(page, locale, GOOD(locale));
-    await page.waitForSelector('.term');
+    await page.locator('.term').first().waitFor();
     await page.locator('.term').nth(0).locator('.term__title label').click();
     await scan(page, 'terms (one confirmed)');
 
@@ -151,7 +151,7 @@ test.describe('other guideline checks', () => {
       });
       await page.goto('/');
       await fillLogin(page, 'en', stopAt === 'login' ? { passport: '', phone: '', name: '' } : GOOD('en'));
-      if (stopAt === 'terms') await page.waitForSelector('.term');
+      if (stopAt === 'terms') await page.locator('.term').first().waitFor();
       await page.locator('body').click({ position: { x: 5, y: 5 } }); // a user gesture, which browsers require before they will ask
       await page.close({ runBeforeUnload: true });
       await ctx.close();

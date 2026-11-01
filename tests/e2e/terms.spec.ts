@@ -69,14 +69,16 @@ test('press feels tactile (scale 0.94) and the check mark reveals from nothing',
   const b = (await card.boundingBox())!;
   await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2);
   await page.mouse.down();
-  await page.waitForTimeout(200);
-  const m = (await box.evaluate((e) => getComputedStyle(e).transform)).match(/matrix\(([^,]+),/);
-  expect(Number(m![1])).toBeCloseTo(0.94, 2);
+  await expect
+    .poll(async () => {
+      const m = (await box.evaluate((e) => getComputedStyle(e).transform)).match(/matrix\(([^,]+),/);
+      return m ? Number(m[1]) : 1;
+    })
+    .toBeCloseTo(0.94, 2);
   await page.mouse.up();
 
   await expect(page.getByRole('checkbox').nth(3)).toBeChecked();
-  await page.waitForTimeout(250);
-  expect(await check.evaluate((e) => getComputedStyle(e).clipPath)).toMatch(/inset\(0px(?: 0px 0px 0px)?\)/);
+  await expect.poll(() => check.evaluate((e) => getComputedStyle(e).clipPath)).toMatch(/inset\(0px(?: 0px 0px 0px)?\)/);
 });
 
 test('Continue is inactive until all five are confirmed, then advances to the signature step', async ({ page }) => {
@@ -142,7 +144,8 @@ test('reduced motion removes the press scale and the reveal', async ({ page }) =
   const b2 = (await card.boundingBox())!;
   await page.mouse.move(b2.x + b2.width / 2, b2.y + b2.height / 2);
   await page.mouse.down();
-  await page.waitForTimeout(150);
+  // The press must really be registered, or "no scale" would pass for the wrong reason.
+  await expect.poll(() => card.evaluate((e) => e.matches(':active'))).toBe(true);
   expect(await card.locator('.term__box').evaluate((e) => getComputedStyle(e).transform)).toBe('none');
   await page.mouse.up();
   expect(await card.locator('.term__check').evaluate((e) => getComputedStyle(e).transitionDuration)).toBe('0s');

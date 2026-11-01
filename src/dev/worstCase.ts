@@ -13,3 +13,15 @@ export const WORST_FULL_NAME =
 
 /** A backend might return a content hash as the receipt id: 64 unbroken characters. */
 export const WORST_REFERENCE = '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08';
+
+const failed = new Set<string>();
+
+/**
+ * DEV ONLY: `?fail=login` or `?fail=submit` makes the mock backend fail the first such call with a network
+ * error, so the retry path can be exercised in a real browser. Guard every call with `import.meta.env.DEV`.
+ */
+export function shouldFailOnce(kind: 'login' | 'submit'): boolean {
+  if (typeof location === 'undefined' || new URLSearchParams(location.search).get('fail') !== kind || failed.has(kind)) return false;
+  failed.add(kind);
+  return true;
+}

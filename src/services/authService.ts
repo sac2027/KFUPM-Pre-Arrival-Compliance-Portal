@@ -5,7 +5,7 @@
  *  - Reject with `new ServiceError('invalid_credentials', …)` when the student cannot be verified.
  *  - Never log, persist (localStorage/sessionStorage) or put credentials in a URL.
  */
-import { isWorstCase, WORST_FULL_NAME } from '../dev/worstCase';
+import { isWorstCase, shouldFailOnce, WORST_FULL_NAME } from '../dev/worstCase';
 import { DEFAULT_LATENCY_MS, simulate } from './mockUtils';
 import type { MockOptions } from './mockUtils';
 import { ServiceError } from './types';
@@ -15,6 +15,7 @@ export function createMockAuthService(opts: MockOptions = {}): AuthService {
   return {
     login(credentials: Credentials): Promise<Session> {
       return simulate(opts, () => {
+        if (import.meta.env.DEV && shouldFailOnce('login')) throw new ServiceError('network', 'dev: simulated outage');
         const blank = Object.values(credentials).some((v) => v.trim() === '');
         if (blank) throw new ServiceError('invalid_credentials', 'All three fields are required.');
         return {

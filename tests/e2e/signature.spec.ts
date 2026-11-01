@@ -21,7 +21,7 @@ async function toSign(page: Page, locale: Locale = 'en') {
   await page.getByLabel(s.phone).fill('+966551234567');
   await page.getByLabel(s.name).fill(locale === 'en' ? 'Mai Nguyễn' : 'محمد عبدالله');
   await page.getByRole('button', { name: s.signin }).click();
-  await page.waitForSelector('.term');
+  await page.locator('.term').first().waitFor();
   for (let i = 0; i < 5; i++) await page.locator('.term').nth(i).locator('.term__title label').click();
   await page.getByRole('button', { name: s.cont }).click();
   await expect(page.locator('#sign-heading')).toBeFocused();
@@ -93,8 +93,7 @@ test('only the selected tab is visible, and ink survives being hidden and shown 
   await page.getByRole('tab', { name: 'Draw' }).click();
   await expect(page.locator('canvas')).toBeVisible();
   await expect(page.locator('.drop')).toBeHidden();
-  await page.waitForTimeout(300);
-  expect(await inkPixels(page)).toBeGreaterThan(before * 0.5); // redrawn after the canvas was display:none
+  await expect.poll(() => inkPixels(page)).toBeGreaterThan(before * 0.5); // redrawn after the canvas was display:none
 });
 
 test('an accidental dot is not a signature', async ({ page }) => {
@@ -110,12 +109,10 @@ test('ink survives a viewport resize and a tab round-trip', async ({ page }) => 
   const before = await inkPixels(page);
   const vp = page.viewportSize()!;
   await page.setViewportSize({ width: vp.width - 20, height: vp.height });
-  await page.waitForTimeout(250);
-  expect(await inkPixels(page)).toBeGreaterThan(before * 0.5);
+  await expect.poll(() => inkPixels(page)).toBeGreaterThan(before * 0.5);
   await page.getByRole('tab', { name: 'Upload' }).click();
   await page.getByRole('tab', { name: 'Draw' }).click();
-  await page.waitForTimeout(250);
-  expect(await inkPixels(page)).toBeGreaterThan(before * 0.5);
+  await expect.poll(() => inkPixels(page)).toBeGreaterThan(before * 0.5);
   await expect(submitBtn(page)).not.toHaveAttribute('aria-disabled', 'true');
 });
 

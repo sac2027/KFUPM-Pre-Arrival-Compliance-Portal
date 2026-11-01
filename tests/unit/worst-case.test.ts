@@ -43,7 +43,7 @@ describe('production bundle (dev tooling must never ship)', () => {
       stdio: 'pipe',
     });
     const js = files(outDir).filter((f) => /\.(js|html|css|json)$/.test(f)).map((f) => readFileSync(f, 'utf8')).join('\n');
-    for (const needle of ['WORSTCASE-FIXTURE-MARKER', 'Worst case', 'data-dev-chrome', 'KFUPMDSACODEOFCONDUCT', WORST_REFERENCE, WORST_FULL_NAME.slice(0, 30), "get('data')"]) {
+    for (const needle of ['WORSTCASE-FIXTURE-MARKER', 'Worst case', 'data-dev-chrome', 'KFUPMDSACODEOFCONDUCT', WORST_REFERENCE, WORST_FULL_NAME.slice(0, 30), "get('data')", "get('fail')", 'simulated outage']) {
       expect(js, needle).not.toContain(needle);
     }
     expect(js.length).toBeGreaterThan(50_000); // sanity: we really did read the bundle

@@ -24,7 +24,7 @@ async function toDone(page: Page, locale: Locale = 'en', fullName = locale === '
   await page.getByLabel(s.phone).fill('+966551234567');
   await page.getByLabel(s.name).fill(fullName);
   await page.getByRole('button', { name: s.signin }).click();
-  await page.waitForSelector('.term');
+  await page.locator('.term').first().waitFor();
   for (let i = 0; i < 5; i++) await page.locator('.term').nth(i).locator('.term__title label').click();
   await page.getByRole('button', { name: s.cont }).click();
   const canvas = page.locator('canvas');

@@ -6,7 +6,7 @@
  *  - Encrypt passport/phone/name/signature at rest; never log the payload.
  *  - Return only `{ referenceNumber, receivedAt }`; do not echo PII back to the browser.
  */
-import { isWorstCase, WORST_REFERENCE } from '../dev/worstCase';
+import { isWorstCase, shouldFailOnce, WORST_REFERENCE } from '../dev/worstCase';
 import { TERM_IDS } from '../lib/termsSchema';
 import { DEFAULT_LATENCY_MS, randomCode, simulate } from './mockUtils';
 import type { MockOptions } from './mockUtils';
@@ -29,6 +29,7 @@ export function createMockDbService(opts: MockOptions = {}): DbService {
   return {
     submitCompliance(payload: SubmissionPayload): Promise<SubmissionReceipt> {
       return simulate(opts, () => {
+        if (import.meta.env.DEV && shouldFailOnce('submit')) throw new ServiceError('network', 'dev: simulated outage');
         assertValid(payload);
         const receivedAt = new Date().toISOString();
         return {
