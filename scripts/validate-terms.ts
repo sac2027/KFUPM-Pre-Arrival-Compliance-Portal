@@ -32,7 +32,12 @@ for (const t of terms.terms) {
 for (const [id, l] of Object.entries(terms.links)) {
   if (l.url.length > 500) warnings.push(`link "${id}" URL is ${l.url.length} characters`);
 }
+const strict = process.argv.includes('--strict');
 if (warnings.length) {
   console.warn(`\n⚠ ${warnings.length} item(s) to resolve before launch:`);
   for (const w of warnings) console.warn(`  - ${w}`);
+}
+if (strict && warnings.length) {
+  console.error('\n\u2716 --strict: resolve every item above before a release.');
+  process.exit(1);
 }

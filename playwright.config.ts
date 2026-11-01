@@ -1,10 +1,11 @@
+import { existsSync } from 'node:fs';
 import { defineConfig } from '@playwright/test';
 
-// Reuses the preinstalled Chromium; never run `playwright install`.
-const launchOptions = {
-  executablePath: process.env.PW_CHROMIUM_PATH ?? '/opt/pw-browsers/chromium',
-  args: ['--no-sandbox'],
-};
+// Use a specific Chromium when one is provided (PW_CHROMIUM_PATH) or preinstalled in the build sandbox;
+// anywhere else (a laptop, CI) Playwright's own browser from `npx playwright install chromium` is used.
+const SANDBOX_CHROMIUM = '/opt/pw-browsers/chromium';
+const executablePath = process.env.PW_CHROMIUM_PATH ?? (existsSync(SANDBOX_CHROMIUM) ? SANDBOX_CHROMIUM : undefined);
+const launchOptions = { ...(executablePath ? { executablePath } : {}), args: ['--no-sandbox'] };
 const PROD = 'http://127.0.0.1:4173'; // the production build: what students get
 const DEV = 'http://127.0.0.1:5174'; // the dev server: has the worst-case toggle (break-ui)
 

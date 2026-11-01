@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "verify": "npm run typecheck && npm run lint && npm run test && npm run validate:terms",
-    "validate:terms": "node --experimental-strip-types scripts/validate-terms.ts"
+    "validate:terms": "node --experimental-strip-types scripts/validate-terms.ts",
+    "release:check": "npm run verify && npm run validate:terms -- --strict && npm run build"
   },
   "dependencies": {
     "@radix-ui/react-tabs": "^1.2.1",
@@ -42,5 +43,8 @@
     "vite": "^8.3.5",
     "vitest": "^5.0.5",
     "wrangler": "^4.156.0"
+  },
+  "engines": {
+    "node": ">=22.6"
   }
 }
