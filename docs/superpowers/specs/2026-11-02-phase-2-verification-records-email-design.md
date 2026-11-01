@@ -61,26 +61,27 @@ Decoration for its own sake: the redesign must read as an official document, not
 
 ### Data
 
-`roster` (D1 `pacf-roster`): `students(student_id PK, full_name, passport_number UNIQUE, phone_e164, email, nationality,
-program, intake_term, status, created_at)`. Import: `npm run roster:import -- path.csv` (validates, normalises passport to
-upper-case alphanumerics, phone to E.164, email to lower-case; upserts by passport). A sample CSV of ten fictional
-students is checked in, every one with `email = eyadsalem139@gmail.com` so test emails reach the user.
+`roster` (D1 `pacf-roster`): `students(passport_number PK, full_name, phone_e164, email, nationality, program,
+intake_term, status, created_at)`. KFUPM has no student ID or university email for a student before arrival, so the
+passport number is the key and `email` is the student's own address, which is where the PDF is sent. Import: `npm run roster:import -- path.csv` (validates, normalises passport to
+upper-case alphanumerics, phone to E.164, email to lower-case; upserts by passport). A test roster of four students is
+checked in (`data/roster.sample.csv`), using the four addresses the user supplied, so test emails reach real inboxes.
 
-`records` (D1 `pacf-records`): `submissions(id PK, reference_number UNIQUE, student_id, full_name, passport_last4,
+`records` (D1 `pacf-records`): `submissions(id PK, reference_number UNIQUE, full_name, passport_last4,
 email, phone_e164, locale, accepted_term_ids JSON, signature_method, signature_key, pdf_key, pdf_sha256, submitted_at,
 document_received_at, email_status ('pending'|'sent'|'failed'|'logged'), email_message_id, email_error, user_agent)`,
-`sessions(sid PK, student_id, issued_at, expires_at, used_at)`, `verify_attempts(key, window_start, count)`, `outbox`
+`sessions(sid PK, passport_number, issued_at, expires_at, used_at)`, `verify_attempts(key, window_start, count)`, `outbox`
 (log-mode emails). Full passport numbers are never stored in `records`: the roster has them; the record keeps the last four.
 
 `documents` (R2 `pacf-documents`): `submissions/<id>/declaration.pdf`, `submissions/<id>/signature.png`.
 
 ### API (Pages Functions under `functions/api/`)
 
-- `POST /api/verify` `{passportNumber, phoneNumber, fullName, email}` → 200 `{session: {sessionId, student: {studentId,
-  fullName, email(masked), passportLast4}, issuedAt, expiresAt}, token}` or 401 `{code: 'no_match'}` (same message for
+- `POST /api/verify` `{passportNumber, phoneNumber, fullName, email}` → 200 `{session: {sessionId, student: {fullName,
+  email(masked), passportLast4}, issuedAt, expiresAt}, token}` or 401 `{code: 'no_match'}` (same message for
   every kind of mismatch) or 429. Matching: passport exact after normalisation (the key); email and phone exact after
   normalisation; name compared after NFKC, case-folding and whitespace collapsing. Throttle: 5 failures per passport and
-  20 per IP hash per 15 minutes. The token is an HS256 JWT (WebCrypto, `SESSION_SECRET`), 30 minutes, bound to the sid.
+  20 per IP hash per 15 minutes. The token is an HS256 JWT (WebCrypto, `SESSION_SECRET`), 30 minutes, bound to the sid (the sid, not the passport, is in the token).
 - `POST /api/submissions` (Bearer token) `{locale, acceptedTermIds, signature: {method, dataUrl}}` → validates (five ids in
   order, PNG/JPEG magic bytes, ≤ 2 MB), stores the signature in R2, inserts the record with `email_status='pending'`,
   marks the session used → 201 `{id, referenceNumber, submittedAt}`. A second call with the same session is rejected.
@@ -99,8 +100,8 @@ Microsoft Graph `sendMail` from a deanship mailbox once IT grants an app registr
 
 ### Front end
 
-- Login gains Email (validated, lower-cased, `autocomplete="email"`, `dir="ltr"`). The session's canonical name and
-  student ID from the roster are what the declaration and PDF show (not what was typed).
+- Login gains Email (validated, lower-cased, `autocomplete="email"`, `dir="ltr"`). The session's canonical name from
+  the roster is what the declaration and PDF show (not what was typed).
 - Flow: `login → terms → sign → done`. Back: terms → login ("Change my details", ends the session), sign → terms. The
   URL hash carries the step name only (`#terms`); `popstate` moves back when allowed and is a no-op on Done. Reload
   returns to login (nothing is persisted, by design, and the leave-warning stays).
@@ -121,7 +122,8 @@ exact type scale and spacing; the Emil skill governs every interaction's timing.
 
 ## Decided by the user
 
-Approach A; sender/recipient `eyadsalem139@gmail.com` for now; icons on actions; remove the ref/stage block and the
+Approach A; the user runs the Cloudflare setup from a written walkthrough (no credentials shared with the builder);
+the test roster uses the user's four addresses; icons on actions; remove the ref/stage block and the
 location line; Back where it makes sense; a top-tier official look.
 
 ## Decisions I made (say so if any is wrong)
@@ -129,7 +131,6 @@ location line; Back where it makes sense; a top-tier official look.
 - Roster match is all four fields; name compared loosely, the other three exactly after normalisation.
 - Email is sent to the **roster** email, never to the typed one (the typed one is only a verification factor).
 - PDF generated client-side as described; raster, A4, ≤ 8 MB.
-- Student ID from the roster appears on the declaration and PDF (it is now known, and the paper form had it).
 - Sessions expire after 30 minutes and are single-use.
 - `lucide-react` for icons; Radix Tabs stays; no other UI library.
 - Rate limits and sizes as stated above.

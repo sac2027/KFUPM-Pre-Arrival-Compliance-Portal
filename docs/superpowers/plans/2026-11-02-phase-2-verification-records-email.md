@@ -47,7 +47,7 @@ migrations/roster/0001_students.sql
 migrations/records/0001_records.sql
 scripts/roster-import.ts             CSV → SQL upsert (local or remote)
 scripts/data-export.ts               d1 export + R2 copy runbook helper
-data/roster.sample.csv               ten fictional students, all emailing eyadsalem139@gmail.com
+data/roster.sample.csv               four test students (the user's four addresses)
 src/services/{authService.ts,dbService.ts}   HTTP clients (same interfaces); mocks kept in *.mock.ts
 src/lib/pdf.ts                       print sheet → A4 raster PDF
 src/lib/history.ts                   step ↔ location.hash, popstate
@@ -81,24 +81,24 @@ docs/HANDOVER.md                     account membership, secrets, export runbook
 **Interfaces (functions/lib/match.ts, pure):** `normalisePassport(s): string` (upper, alnum only), `normalisePhone(s): string|null` (`+`/`00` → E.164, else null), `normaliseEmail(s): string`, `nameKey(s): string[]` (NFKC, casefold, strip Latin diacritics, tokens), `namesMatch(a, b): boolean` (every token of the shorter appears in the longer; at least one token), `StudentRow` type.
 
 - [ ] Failing tests: `normalisePhone('0501234567')` → null; `'00966501234567'` → `'+966501234567'`; `namesMatch('Mai Nguyễn','NGUYEN THI MAI')` true; `namesMatch('Mai Nguyen','Mai Tran')` false; importer rejects a row without `+`, duplicate passports, bad email; upsert SQL is parameterised.
-- [ ] Implement; sample CSV with ten students (varied scripts in names: Vietnamese, Arabic transliteration, Nigerian, Chinese pinyin, long Gulf name), all `eyadsalem139@gmail.com`.
+- [ ] Implement; the test roster: four students with the user's four addresses, passports `TEST0001`–`TEST0004`, phones `+96650000000N`.
 - [ ] Verify, commit `feat(roster): students schema, normalisation rules and CSV importer`.
 
 ### Task 3: `POST /api/verify` with throttle and session token
 
 **Files:** `functions/api/verify.ts`, `functions/lib/{jwt.ts,throttle.ts,validate.ts}`, `migrations/records/0001_records.sql` (sessions, verify_attempts, outbox, submissions), `tests/functions/{jwt,throttle,verify}.test.ts`, `tests/e2e/verify-api.spec.ts`.
 
-**Interfaces:** `signSession({sid, studentId}, secret, ttlSeconds): Promise<string>`, `verifySession(token, secret): Promise<{sid, studentId}|null>`; `checkAndCount(db, key, limit, windowSeconds): Promise<{allowed: boolean; retryAfter?: number}>`; response shape per spec.
+**Interfaces:** `signSession({sid}, secret, ttlSeconds): Promise<string>`, `verifySession(token, secret): Promise<{sid}|null>`; `checkAndCount(db, key, limit, windowSeconds): Promise<{allowed: boolean; retryAfter?: number}>`; response shape per spec.
 
-- [ ] Failing tests: full match → 200 with masked email `e•••@gmail.com`, `passportLast4`, canonical `fullName`, `studentId`; each single-field mismatch → 401 `no_match`; 6th failure for one passport in 15 min → 429 with `Retry-After`; token round-trips and expires; malformed body → 400.
+- [ ] Failing tests: full match → 200 with masked email `e•••@gmail.com`, `passportLast4`, canonical `fullName`; each single-field mismatch → 401 `no_match`; 6th failure for one passport in 15 min → 429 with `Retry-After`; token round-trips and expires; malformed body → 400.
 - [ ] Implement (IP hashed with the secret before storage; constant-time compare not needed for non-secret factors but the code path must not leak which field failed).
 - [ ] Verify, commit `feat(api): verify sign-in against the roster with throttling and a session token`.
 
 ### Task 4: Email field and real `authService`
 
-**Files:** `src/lib/validators.ts` (+`emailSchema`; phone requires `+`/`00`), `src/features/login/LoginScreen.tsx`, `src/services/authService.ts` (HTTP), `src/services/authService.mock.ts`, `src/services/types.ts` (`Credentials.email`, `Session.student.studentId`, `expiresAt`, `token`), i18n strings, `src/features/terms/TermsStep.tsx` (student ID row), tests updated, `tests/e2e/login.spec.ts` (against real API with the seeded roster).
+**Files:** `src/lib/validators.ts` (+`emailSchema`; phone requires `+`/`00`), `src/features/login/LoginScreen.tsx`, `src/services/authService.ts` (HTTP), `src/services/authService.mock.ts`, `src/services/types.ts` (`Credentials.email`, `expiresAt`, `token`), i18n strings, tests updated, `tests/e2e/login.spec.ts` (against real API with the seeded roster).
 
-- [ ] Failing tests: four fields; `0501234567` → `error.phone.countryCode`; `Mai@Example.com ` normalises; a mismatch shows the one generic message with the "exactly as in your passport" hint; a match shows the roster's canonical name and student ID on the terms step; `no_match` never says which field.
+- [ ] Failing tests: four fields; `0501234567` → `error.phone.countryCode`; `Mai@Example.com ` normalises; a mismatch shows the one generic message with the "exactly as in your passport" hint; a match shows the roster's canonical name on the terms step; `no_match` never says which field.
 - [ ] Implement; `?fail=login` keeps working through the client in DEV.
 - [ ] Verify, commit `feat(login): email as a fourth factor; sign-in verifies against the roster`.
 
@@ -151,10 +151,10 @@ docs/HANDOVER.md                     account membership, secrets, export runbook
 
 - [ ] `break-ui` spot pass on the email field and the receipt's email line (long addresses, plus-addressing, IDN domains display).
 - [ ] `npm run release:check`; full Playwright; update `docs/audit.md` and `docs/qa/break-ui.md` with phase-2 findings.
-- [ ] If the user has supplied credentials: run the runbook, send one real email to `eyadsalem139@gmail.com`, record the message id in the final report.
+- [ ] The user runs `docs/HANDOVER.md` (option 2); the builder stays available to debug the first real send.
 
 ## Self-review
 
 - Spec coverage: goals 1→T3/T4, 2→T2, 3→T5/T6, 4→T6, 5→T9, 6→T7/T8; constraints→T1; answers to the builder check→T1, T2, T4, T5, T6.
-- Types: `Session` gains `token`, `expiresAt`, `student.studentId`, `student.passportLast4`, `student.email` (masked) in T4 and is used unchanged by T5–T7.
+- Types: `Session` gains `token`, `expiresAt`, `student.passportLast4`, `student.email` (masked) in T4 and is used unchanged by T5–T7.
 - Review Focus lines each name a task whose tests pin them.

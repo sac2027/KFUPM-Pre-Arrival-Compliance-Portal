@@ -20,4 +20,7 @@ jobs:
       # The end-to-end suite drives a real browser and checks the generated PDF text.
       - run: sudo apt-get update && sudo apt-get install -y poppler-utils
       - run: npx playwright install --with-deps chromium
+      - run: cp .dev.vars.example .dev.vars
       - run: npm run test:e2e
+        env:
+          WRANGLER_SEND_METRICS: 'false'

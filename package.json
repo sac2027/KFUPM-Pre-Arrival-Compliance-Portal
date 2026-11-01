@@ -7,16 +7,21 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p functions",
     "lint": "eslint .",
     "test": "vitest run",
     "test:e2e": "playwright test",
     "verify": "npm run typecheck && npm run lint && npm run test && npm run validate:terms",
     "validate:terms": "node --experimental-strip-types scripts/validate-terms.ts",
-    "release:check": "npm run verify && npm run validate:terms -- --strict && npm run build"
+    "release:check": "npm run verify && npm run validate:terms -- --strict && npm run build",
+    "dev:api": "wrangler pages dev --port 8788 --ip 127.0.0.1",
+    "db:migrate:local": "wrangler d1 migrations apply pacf-roster --local && wrangler d1 migrations apply pacf-records --local",
+    "db:migrate:remote": "wrangler d1 migrations apply pacf-roster --remote && wrangler d1 migrations apply pacf-records --remote",
+    "serve:test": "npm run build && npm run db:migrate:local && npm run dev:api"
   },
   "dependencies": {
     "@radix-ui/react-tabs": "^1.2.1",
+    "jose": "^6.2.14",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-hook-form": "^7.91.0",
@@ -25,6 +30,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
+    "@cloudflare/workers-types": "^5.20261101.1",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.63.0",
     "@testing-library/jest-dom": "^7.0.1",
