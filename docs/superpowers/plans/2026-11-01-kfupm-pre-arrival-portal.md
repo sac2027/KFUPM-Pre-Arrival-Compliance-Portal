@@ -6,7 +6,7 @@
 
 **Architecture:** Static Vite + React + TypeScript SPA. Policy content lives in `src/data/compliance-terms.json` (validated by a schema script); UI components only render it. All I/O is behind two interfaces (`authService`, `dbService`) with mock implementations. One linear flow: Login → Terms → Signature → Receipt, driven by a small step state machine. Motion is hand-written CSS/WAAPI (no animation library). Deployed as Cloudflare Workers static assets.
 
-**Tech Stack:** Vite, React 18, TypeScript (strict), plain CSS with design tokens + logical properties, react-hook-form + valibot (validation), signature_pad (canvas), @radix-ui/react-tabs (tabs only), self-hosted brand fonts (KFUPM Display + IBM Plex Sans Arabic, both supplied), Vitest + Testing Library, Playwright, wrangler.
+**Tech Stack:** Vite, React 19, TypeScript (strict), plain CSS with design tokens + logical properties, react-hook-form + valibot (validation), signature_pad (canvas), @radix-ui/react-tabs (tabs only), self-hosted brand fonts (KFUPM Display + IBM Plex Sans Arabic, both supplied), Vitest + Testing Library, Playwright, wrangler.
 
 **Spec:** The user's brief (conversation of 2026-11-01), `International_Students_Declaration_Form_Dec_19_EDIT_suggestions.docx`, `Full_Page_Embed.pdf` (legacy page), and the brand pack zips (`OneDrive_2/4/5`). Design doc to be committed as `docs/superpowers/specs/2026-11-01-kfupm-portal-design.md` in Task 0.
 
