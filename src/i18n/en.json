@@ -17,5 +17,21 @@
   "doc.ref": "Document ref",
   "doc.stage": "Stage",
   "doc.requirement": "Requirement",
-  "doc.mandatory": "Mandatory"
+  "doc.mandatory": "Mandatory",
+  "login.heading": "Sign in",
+  "login.intro": "Enter your details exactly as they appear on your passport.",
+  "login.passport": "Passport number",
+  "login.passport.hint": "Letters and numbers only. Spaces are fine.",
+  "login.phone": "Phone number",
+  "login.phone.hint": "Include the country code, for example +966 55 123 4567.",
+  "login.name": "Full name",
+  "login.name.hint": "As written in your passport.",
+  "login.submit": "Sign in",
+  "login.submitting": "Signing in…",
+  "error.required": "This field is required.",
+  "error.passport": "Enter 5–20 letters and numbers, as printed on your passport.",
+  "error.phone": "Enter a phone number with its country code, for example +966 55 123 4567.",
+  "error.name": "Enter your full name (2–100 letters) as it appears on your passport.",
+  "error.login": "We couldn't sign you in. Check your details and try again.",
+  "error.network": "Can't reach the server. Check your connection and try again."
 }

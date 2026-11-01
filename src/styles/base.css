@@ -67,6 +67,20 @@ a {
   color: var(--link);
 }
 
+:root {
+  accent-color: var(--turquoise);
+}
+
+::selection {
+  background: var(--turquoise);
+  color: var(--white);
+}
+
+input,
+textarea {
+  caret-color: var(--turquoise);
+}
+
 :focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 3px;

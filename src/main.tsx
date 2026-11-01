@@ -5,6 +5,7 @@ import './styles/fonts.css';
 import './styles/tokens.css';
 import './styles/base.css';
 import './styles/shell.css';
+import './styles/forms.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing #root element');

@@ -1,0 +1,124 @@
+import { useRef, useState } from 'react';
+import type { FormEvent } from 'react';
+import { useForm } from 'react-hook-form';
+import type { FieldErrors, Resolver } from 'react-hook-form';
+import * as v from 'valibot';
+import { Button } from '../../components/Button';
+import { Field } from '../../components/Field';
+import { useI18n } from '../../i18n/I18nProvider';
+import type { MessageKey } from '../../i18n/I18nProvider';
+import { loginSchema } from '../../lib/validators';
+import type { LoginInput } from '../../lib/validators';
+import { authService } from '../../services/authService';
+import { ServiceError } from '../../services/types';
+import type { AuthService, Session } from '../../services/types';
+
+/** Validates with the valibot schema; the resolved values are the *normalised* ones. */
+const resolver: Resolver<LoginInput> = async (values) => {
+  const result = v.safeParse(loginSchema, values);
+  if (result.success) return { values: result.output, errors: {} };
+  const errors: FieldErrors<LoginInput> = {};
+  for (const issue of result.issues) {
+    const field = issue.path?.[0]?.key as keyof LoginInput | undefined;
+    if (field && !errors[field]) errors[field] = { type: issue.type, message: issue.message };
+  }
+  return { values: {}, errors };
+};
+
+export function LoginScreen({ auth = authService, onLoggedIn }: { auth?: AuthService; onLoggedIn: (session: Session) => void }) {
+  const { t } = useI18n();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginInput>({
+    resolver,
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
+    defaultValues: { passportNumber: '', phoneNumber: '', fullName: '' },
+  });
+  const [pending, setPending] = useState(false);
+  const [failure, setFailure] = useState<MessageKey | null>(null);
+  const inFlight = useRef(false);
+
+  const submit = handleSubmit(async (values) => {
+    setPending(true);
+    setFailure(null);
+    try {
+      onLoggedIn(await auth.login(values));
+    } catch (err) {
+      setFailure(err instanceof ServiceError && err.code === 'network' ? 'error.network' : 'error.login');
+    } finally {
+      setPending(false);
+    }
+  });
+
+  // The guard lives in the event handler: one submit at a time, however fast the user clicks or presses Enter.
+  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+    if (inFlight.current) {
+      event.preventDefault();
+      return;
+    }
+    inFlight.current = true;
+    void submit(event).finally(() => {
+      inFlight.current = false;
+    });
+  };
+
+  const err = (field: keyof LoginInput) => {
+    const key = errors[field]?.message;
+    return key ? t(key as MessageKey) : undefined;
+  };
+
+  return (
+    <section className="login" aria-labelledby="login-heading">
+      <h2 id="login-heading">{t('login.heading')}</h2>
+      <p className="login__intro">{t('login.intro')}</p>
+      <form className="form" noValidate onSubmit={onSubmit}>
+        <Field
+          id="passport"
+          label={t('login.passport')}
+          hint={t('login.passport.hint')}
+          error={err('passportNumber')}
+          dir="ltr"
+          autoComplete="off"
+          autoCapitalize="characters"
+          spellCheck={false}
+          maxLength={40}
+          {...register('passportNumber')}
+        />
+        <Field
+          id="phone"
+          label={t('login.phone')}
+          hint={t('login.phone.hint')}
+          error={err('phoneNumber')}
+          type="tel"
+          inputMode="tel"
+          dir="ltr"
+          autoComplete="tel"
+          maxLength={30}
+          {...register('phoneNumber')}
+        />
+        <Field
+          id="full-name"
+          label={t('login.name')}
+          hint={t('login.name.hint')}
+          error={err('fullName')}
+          dir="auto"
+          autoComplete="name"
+          spellCheck={false}
+          maxLength={200}
+          {...register('fullName')}
+        />
+        {failure && (
+          <p className="form__alert" role="alert">
+            {t(failure)}
+          </p>
+        )}
+        <Button type="submit" busy={pending}>
+          {pending ? t('login.submitting') : t('login.submit')}
+        </Button>
+      </form>
+    </section>
+  );
+}
