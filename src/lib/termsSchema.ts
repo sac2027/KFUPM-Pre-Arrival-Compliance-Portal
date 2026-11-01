@@ -37,7 +37,7 @@ const review = v.picklist(['approved', 'needs-review']);
 const termsSchema = v.pipe(
   v.object({
     meta: v.object({ source: v.string(), reviewStatus: v.object({ en: review, ar: review }) }),
-    document: v.object({ ref: text, stage: text, title: bilingual, intro: bilingual, closing: bilingual }),
+    document: v.object({ ref: text, stage: bilingual, title: bilingual, intro: bilingual, closing: bilingual }),
     links: v.record(v.string(), link),
     terms: v.pipe(
       v.array(v.object({ id: v.picklist(TERM_IDS), title: bilingual, body })),

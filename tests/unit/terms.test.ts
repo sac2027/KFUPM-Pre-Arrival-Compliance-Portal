@@ -55,15 +55,31 @@ describe('compliance-terms.json', () => {
     }
   });
 
-  it('applies the docx tracked change to term 3 (appearance, spelled correctly)', () => {
+  it('keeps term 3 at the docx base wording: appearance spelled correctly, no tracked "ensure that" suggestion', () => {
     const en = termText(terms.terms[2]!, 'en', terms.links);
-    expect(en).toContain('appearance');
+    expect(en).toContain('behavior, appearance, and responsible use');
     expect(en).not.toContain('apperance');
+    expect(en).toContain('I will ensure my actions align');
+    expect(en).not.toContain('ensure that');
+  });
+
+  // Guards against accidental wording drift while the legacy text is the source of truth.
+  // When KFUPM legal approves new wording, update the strings below in the same commit as the JSON.
+  it('matches the legacy page verbatim for the intro and terms 1-2 (verified against Full_Page_Embed.pdf)', () => {
+    expect(terms.document.intro.en).toBe(
+      'As an international student at King Fahd University of Petroleum & Minerals, I understand that my stay in the Kingdom of Saudi Arabia requires full compliance with the country’s laws, cultural norms, and University policies. By signing this form, I acknowledge my responsibilities and agree to the following terms:',
+    );
+    expect(termText(terms.terms[0]!, 'en', terms.links)).toBe(
+      'I commit to adhering to all applicable laws and regulations of the Kingdom of Saudi Arabia, including the Public Decency Regulations, which govern public behavior, dress code, and interactions. I have reviewed the Ministry of Interior Public Decency Regulations (Official Public Decency Regulations PDF • Overview) and other relevant legal resources. I acknowledge that violations of these laws may result in legal consequences that could affect my status in the country.',
+    );
+    expect(termText(terms.terms[1]!, 'en', terms.links)).toBe(
+      'I will respect the cultural values, customs, and traditions of Saudi Arabia, including appropriate conduct, attire, and communication. I have reviewed cultural guidelines provided by Visit Saudi (Saudi Culture and Customs Guide) to familiarize myself with local expectations. I understand that respecting these norms is essential for fostering a positive experience for myself and the local community.',
+    );
   });
 
   it('records document ref and stage', () => {
     expect(terms.document.ref).toBe('KFUPM-INTL-PACF');
-    expect(terms.document.stage).toBe('Pre-Arrival');
+    expect(terms.document.stage.en).toBe('Pre-Arrival State');
   });
 
   it('rejects a term missing its Arabic title and names the path', () => {
