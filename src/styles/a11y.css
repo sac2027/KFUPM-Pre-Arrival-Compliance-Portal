@@ -16,7 +16,7 @@
   }
 
   .term {
-    border: 1px solid CanvasText;
+    border: 1px solid CanvasText; /* taste-skill-ignore: forced colours drops the tone step, so the card needs an outline to stay distinct */
   }
 
   .term__box {
