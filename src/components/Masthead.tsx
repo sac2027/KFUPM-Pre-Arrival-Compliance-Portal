@@ -17,6 +17,7 @@ export function Masthead() {
           alt={t('brand.logoAlt')}
           width={240}
           height={98}
+          fetchPriority="high"
         />
         <div className="masthead__portal">
           <p className="masthead__portal-name">{t('portal.name')}</p>

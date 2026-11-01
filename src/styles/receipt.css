@@ -65,6 +65,18 @@
   }
 }
 
+.receipt__confirm {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--beige);
+}
+
+.receipt__confirm p {
+  margin: 0;
+  font-weight: 500;
+}
+
 .receipt__actions {
   display: flex;
   flex-wrap: wrap;

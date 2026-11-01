@@ -50,7 +50,9 @@ export function TermsStep({
 
       <dl className="declarant">
         <dt>{t('terms.declarant')}</dt>
-        <dd dir="auto">{session.student.fullName}</dd>
+        <dd dir="auto" translate="no">
+          {session.student.fullName}
+        </dd>
         <dt>{t('terms.date')}</dt>
         <dd>{formatDate(session.issuedAt, locale)}</dd>
       </dl>

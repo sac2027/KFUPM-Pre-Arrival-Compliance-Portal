@@ -65,6 +65,9 @@ test('leaves no personal data in the URL or browser storage, and Finish wipes th
   expect(leaks.cookie).toBe('');
 
   await page.getByRole('button', { name: 'Finish and clear my details' }).click();
+  await expect(page.getByRole('alert')).toContainText('Print or save it first'); // one click does not destroy the declaration
+  await expect(page.getByRole('button', { name: 'Yes, clear my details' })).toBeFocused();
+  await page.getByRole('button', { name: 'Yes, clear my details' }).click();
   await expect(page.getByRole('heading', { level: 2, name: 'Sign in' })).toBeVisible();
   await expect(page.getByLabel('Passport number')).toHaveValue('');
   await expect(page.getByLabel('Full name')).toHaveValue('');

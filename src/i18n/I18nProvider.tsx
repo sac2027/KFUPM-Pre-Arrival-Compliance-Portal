@@ -29,6 +29,12 @@ export function detectLocale(language: string | undefined): Locale {
   return language?.toLowerCase().startsWith('ar') ? 'ar' : 'en';
 }
 
+/** `?lang=ar` / `?lang=en`, so an email or QR link can open the form in the right language. */
+export function localeFromSearch(search: string): Locale | null {
+  const v = new URLSearchParams(search).get('lang')?.toLowerCase();
+  return v === 'ar' || v === 'en' ? v : null;
+}
+
 function readStoredLocale(): Locale | null {
   try {
     const v = localStorage.getItem(STORAGE_KEY);
@@ -55,7 +61,11 @@ export function I18nProvider({
   initialLocale?: Locale;
 }) {
   const [locale, setLocaleState] = useState<Locale>(
-    () => initialLocale ?? readStoredLocale() ?? detectLocale(globalThis.navigator?.language),
+    () =>
+      initialLocale ??
+      localeFromSearch(globalThis.location?.search ?? '') ??
+      readStoredLocale() ??
+      detectLocale(globalThis.navigator?.language),
   );
   const dir: Dir = locale === 'ar' ? 'rtl' : 'ltr';
 

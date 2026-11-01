@@ -157,8 +157,8 @@ describe('SignatureStep', () => {
   });
 
   it.each([
-    [new ServiceError('network', 'x'), /can't reach the server/i],
-    [new ServiceError('invalid_submission', 'x'), /couldn't submit/i],
+    [new ServiceError('network', 'x'), /can’t reach the server/i],
+    [new ServiceError('invalid_submission', 'x'), /couldn’t submit/i],
   ])('keeps the signature and offers a retry after a failure', async (err, text) => {
     let calls = 0;
     const { user, submit, onSubmit } = setup({

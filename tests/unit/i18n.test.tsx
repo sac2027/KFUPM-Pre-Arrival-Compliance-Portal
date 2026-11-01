@@ -104,3 +104,13 @@ describe('format', () => {
     expect(format('plain')).toBe('plain');
   });
 });
+
+describe('localeFromSearch (?lang= links)', () => {
+  it('reads en and ar, case-insensitively, and ignores anything else', async () => {
+    const { localeFromSearch } = await import('../../src/i18n/I18nProvider');
+    expect(localeFromSearch('?lang=ar')).toBe('ar');
+    expect(localeFromSearch('?x=1&lang=EN')).toBe('en');
+    expect(localeFromSearch('?lang=fr')).toBeNull();
+    expect(localeFromSearch('')).toBeNull();
+  });
+});

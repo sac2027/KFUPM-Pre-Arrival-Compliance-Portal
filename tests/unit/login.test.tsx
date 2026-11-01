@@ -88,8 +88,8 @@ describe('LoginScreen', () => {
   });
 
   it.each([
-    ['invalid_credentials', /couldn't sign you in/i],
-    ['network', /can't reach the server/i],
+    ['invalid_credentials', /couldn’t sign you in/i],
+    ['network', /can’t reach the server/i],
   ] as const)('keeps the form filled and announces a %s failure', async (code, text) => {
     const auth = makeAuth(async () => {
       throw new ServiceError(code, 'x');

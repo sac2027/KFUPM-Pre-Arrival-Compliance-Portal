@@ -40,8 +40,10 @@
   transition: border-color var(--dur-fast) var(--ease-out);
 }
 
-.field__input:hover {
-  border-color: var(--turquoise);
+@media (hover: hover) and (pointer: fine) {
+  .field__input:hover {
+    border-color: var(--turquoise);
+  }
 }
 
 .field__input:focus-visible {
@@ -89,8 +91,10 @@
   transition: transform 100ms var(--ease-out), background-color var(--dur-fast) var(--ease-out);
 }
 
-.btn:hover {
-  background: color-mix(in srgb, var(--turquoise) 85%, black);
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover {
+    background: color-mix(in srgb, var(--turquoise) 85%, black);
+  }
 }
 
 .btn:active {
@@ -108,9 +112,11 @@
   text-decoration-color: transparent;
 }
 
-.btn--quiet:hover {
-  background: transparent;
-  text-decoration-color: currentColor;
+@media (hover: hover) and (pointer: fine) {
+  .btn--quiet:hover {
+    background: transparent;
+    text-decoration-color: currentColor;
+  }
 }
 
 .btn[aria-busy='true'] {

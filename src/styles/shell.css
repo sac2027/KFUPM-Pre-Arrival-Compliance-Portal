@@ -56,8 +56,10 @@
   transition: text-decoration-color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
 
-.masthead .lang-toggle:hover {
-  text-decoration-color: var(--gold);
+@media (hover: hover) and (pointer: fine) {
+  .masthead .lang-toggle:hover {
+    text-decoration-color: var(--gold);
+  }
 }
 
 .masthead .lang-toggle:active {

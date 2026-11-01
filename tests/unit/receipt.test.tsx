@@ -39,13 +39,37 @@ describe('ReceiptScreen (on screen)', () => {
     expect(within(screenPart).getByText(/1 November 2026/)).toBeInTheDocument();
   });
 
-  it('prints and finishes', async () => {
+  it('prints', async () => {
     const print = vi.spyOn(window, 'print').mockImplementation(() => {});
-    const { user, onFinish } = setup();
+    const { user } = setup();
     await user.click(screen.getByRole('button', { name: 'Print or save as PDF' }));
     expect(print).toHaveBeenCalledTimes(1);
+  });
+
+  it('asks before clearing (it destroys the only copy of the declaration), then clears', async () => {
+    const { user, onFinish } = setup();
     await user.click(screen.getByRole('button', { name: 'Finish and clear my details' }));
+    expect(onFinish).not.toHaveBeenCalled(); // one click is not enough
+    expect(screen.getByRole('alert')).toHaveTextContent(/print or save it first/i);
+    const confirm = screen.getByRole('button', { name: 'Yes, clear my details' });
+    expect(confirm).toHaveFocus(); // keyboard users land on the decision
+    await user.click(confirm);
     expect(onFinish).toHaveBeenCalledTimes(1);
+  });
+
+  it('lets the student change their mind', async () => {
+    const { user, onFinish } = setup();
+    await user.click(screen.getByRole('button', { name: 'Finish and clear my details' }));
+    await user.click(screen.getByRole('button', { name: 'Keep my declaration' }));
+    expect(onFinish).not.toHaveBeenCalled();
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Finish and clear my details' })).toHaveFocus();
+  });
+
+  it('marks names and reference numbers as never-to-translate', () => {
+    setup();
+    expect(document.querySelector('.receipt__ref')).toHaveAttribute('translate', 'no');
+    expect(document.querySelector('.print-sheet [dir="auto"]')).toHaveAttribute('translate', 'no');
   });
 
   it('renders in Arabic', () => {

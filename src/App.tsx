@@ -11,6 +11,7 @@ import { I18nProvider, useI18n } from './i18n/I18nProvider';
 import { loadTerms } from './lib/terms';
 import { authService } from './services/authService';
 import { dbService } from './services/dbService';
+import { useLeaveWarning } from './lib/useLeaveWarning';
 import { flowReducer, initialFlowState } from './state/flow';
 
 const TERMS = loadTerms();
@@ -19,20 +20,21 @@ function Shell() {
   const { t, locale } = useI18n();
   const [flow, dispatch] = useReducer(flowReducer, initialFlowState);
   const doc = TERMS.document;
+  useLeaveWarning(flow.step === 'terms' || flow.step === 'sign'); // real progress that lives only in memory
   return (
     <>
       <a className="skip-link" href="#main">
         {t('a11y.skip')}
       </a>
       <Masthead />
-      <main id="main" className="page">
+      <main id="main" className="page" tabIndex={-1}>
         <article className="doc">
           <Stepper current={flow.step} />
           <header className="doc__head">
             <h1 className="doc__title">{doc.title[locale]}</h1>
             <dl className="doc__meta">
               <dt>{t('doc.ref')}</dt>
-              <dd>{doc.ref}</dd>
+              <dd translate="no">{doc.ref}</dd>
               <dt>{t('doc.stage')}</dt>
               <dd>{doc.stage[locale]}</dd>
               <dt>{t('doc.requirement')}</dt>

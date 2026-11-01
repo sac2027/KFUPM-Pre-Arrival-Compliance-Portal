@@ -116,8 +116,28 @@ textarea {
 }
 
 /* Step headings take programmatic focus (not tab stops), so they carry no ring. */
-[data-step-heading]:focus {
+main:focus {
+  outline: none; /* a skip-link target, not a control */
+}
+
+[data-step-heading]:focus:not(:focus-visible) {
   outline: none;
+}
+
+/* A keyboard user who just moved to a new step sees where they landed. */
+[data-step-heading]:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 6px;
+}
+
+/* No 300ms double-tap-to-zoom delay on controls; the signature canvas keeps touch-action: none. */
+a,
+button,
+label,
+input,
+[role='tab'] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: color-mix(in srgb, var(--turquoise) 18%, transparent);
 }
 
 .noscript {

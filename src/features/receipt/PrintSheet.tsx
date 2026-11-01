@@ -50,11 +50,11 @@ export function PrintSheet({
       <h2 className="print-sheet__title">{doc.title[locale]}</h2>
       <dl className="print-sheet__meta">
         <dt>{t('doc.ref')}</dt>
-        <dd>{doc.ref}</dd>
+        <dd translate="no">{doc.ref}</dd>
         <dt>{t('doc.stage')}</dt>
         <dd>{doc.stage[locale]}</dd>
         <dt>{t('receipt.reference')}</dt>
-        <dd>{receipt.referenceNumber}</dd>
+        <dd translate="no">{receipt.referenceNumber}</dd>
       </dl>
 
       <p>{doc.intro[locale]}</p>
@@ -75,9 +75,13 @@ export function PrintSheet({
         <img className="print-sheet__signature" src={signature.dataUrl} alt={t('print.signature')} />
         <dl className="print-sheet__meta">
           <dt>{t('print.signedBy')}</dt>
-          <dd dir="auto">{session.student.fullName}</dd>
+          <dd dir="auto" translate="no">
+            {session.student.fullName}
+          </dd>
           <dt>{t('print.passport')}</dt>
-          <dd dir="ltr">{maskPassport(session.student.passportNumber)}</dd>
+          <dd dir="ltr" translate="no">
+            {maskPassport(session.student.passportNumber)}
+          </dd>
           <dt>{t('print.signedOn')}</dt>
           <dd>{formatDateTime(receipt.receivedAt, locale)}</dd>
         </dl>
