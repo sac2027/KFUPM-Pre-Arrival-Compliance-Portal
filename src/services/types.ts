@@ -26,6 +26,12 @@ export interface AuthService {
 
 export type SignatureMethod = 'draw' | 'upload';
 
+export interface Signature {
+  method: SignatureMethod;
+  /** PNG or JPEG data URL. */
+  dataUrl: string;
+}
+
 export interface SubmissionPayload {
   session: Session;
   locale: Locale;
@@ -33,7 +39,7 @@ export interface SubmissionPayload {
   /** Must be exactly the five mandated ids, in order. The real backend MUST enforce this too. */
   acceptedTermIds: TermId[];
   /** PNG or JPEG data URL. */
-  signature: { method: SignatureMethod; dataUrl: string };
+  signature: Signature;
   /** ISO-8601 signing time. */
   submittedAt: string;
 }

@@ -2,5 +2,20 @@
   "app.title": "Pre-Arrival Compliance Form",
   "app.org": "Deanship of Student Affairs • International Students Office",
   "a11y.skip": "Skip to main content",
-  "lang.other": "العربية"
+  "lang.other": "العربية",
+  "brand.logoAlt": "KFUPM Student Affairs",
+  "portal.name": "Pre-Arrival Onboarding Portal",
+  "portal.place": "Dhahran, Kingdom of Saudi Arabia",
+  "stepper.label": "Form progress",
+  "step.login": "Sign in",
+  "step.terms": "Review terms",
+  "step.sign": "Sign",
+  "step.done": "Done",
+  "stepper.state.done": "Completed",
+  "stepper.state.current": "Current step",
+  "stepper.state.upcoming": "Not started",
+  "doc.ref": "Document ref",
+  "doc.stage": "Stage",
+  "doc.requirement": "Requirement",
+  "doc.mandatory": "Mandatory"
 }

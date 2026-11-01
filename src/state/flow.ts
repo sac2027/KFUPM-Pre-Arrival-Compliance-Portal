@@ -1,0 +1,45 @@
+import { TERM_IDS } from '../lib/termsSchema';
+import type { TermId } from '../lib/termsSchema';
+import type { Session, SubmissionReceipt } from '../services/types';
+
+export type Step = 'login' | 'terms' | 'sign' | 'done';
+export const STEPS: readonly Step[] = ['login', 'terms', 'sign', 'done'];
+
+/** Held in memory only: it carries PII (the session) and is never persisted. */
+export interface FlowState {
+  step: Step;
+  session: Session | null;
+  acceptedTermIds: TermId[];
+  receipt: SubmissionReceipt | null;
+}
+
+export type FlowAction =
+  | { type: 'loggedIn'; session: Session }
+  | { type: 'termsAccepted'; ids: TermId[] }
+  | { type: 'back' }
+  | { type: 'submitted'; receipt: SubmissionReceipt }
+  | { type: 'reset' };
+
+export const initialFlowState: FlowState = { step: 'login', session: null, acceptedTermIds: [], receipt: null };
+
+const isAllFiveInOrder = (ids: TermId[]) => ids.length === TERM_IDS.length && TERM_IDS.every((id, i) => ids[i] === id);
+
+/** Invalid transitions return the *same* state object, so React skips the re-render. */
+export function flowReducer(state: FlowState, action: FlowAction): FlowState {
+  switch (action.type) {
+    case 'loggedIn':
+      return state.step === 'login' ? { ...state, step: 'terms', session: action.session } : state;
+    case 'termsAccepted':
+      return state.step === 'terms' && state.session && isAllFiveInOrder(action.ids)
+        ? { ...state, step: 'sign', acceptedTermIds: [...action.ids] }
+        : state;
+    case 'back':
+      return state.step === 'sign' ? { ...state, step: 'terms' } : state;
+    case 'submitted':
+      return state.step === 'sign' && state.session && isAllFiveInOrder(state.acceptedTermIds)
+        ? { ...state, step: 'done', receipt: action.receipt }
+        : state;
+    case 'reset':
+      return initialFlowState;
+  }
+}

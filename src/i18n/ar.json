@@ -2,5 +2,20 @@
   "app.title": "نموذج الالتزام قبل الوصول",
   "app.org": "عمادة شؤون الطلاب • مكتب الطلاب الدوليين",
   "a11y.skip": "انتقل إلى المحتوى الرئيسي",
-  "lang.other": "English"
+  "lang.other": "English",
+  "brand.logoAlt": "KFUPM – عمادة شؤون الطلاب",
+  "portal.name": "بوابة التهيئة قبل الوصول",
+  "portal.place": "الظهران، المملكة العربية السعودية",
+  "stepper.label": "مراحل النموذج",
+  "step.login": "تسجيل الدخول",
+  "step.terms": "مراجعة الشروط",
+  "step.sign": "التوقيع",
+  "step.done": "اكتمل",
+  "stepper.state.done": "مكتملة",
+  "stepper.state.current": "المرحلة الحالية",
+  "stepper.state.upcoming": "لم تبدأ",
+  "doc.ref": "رقم المستند",
+  "doc.stage": "المرحلة",
+  "doc.requirement": "المتطلب",
+  "doc.mandatory": "إلزامي"
 }

@@ -29,10 +29,7 @@
   --border-input: var(--sand);   /* 3.14:1 on white */
   --focus: var(--turquoise);     /* 7.36:1 on white; gold on turquoise (4.14:1) inside the masthead */
 
-  /* Shape */
-  --radius-s: 6px;
-  --radius-m: 10px;
-  --radius-l: 16px;
+  /* Shape: square corners everywhere (formal document); decided once. */
 
   /* Motion (used from Task 8) */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);

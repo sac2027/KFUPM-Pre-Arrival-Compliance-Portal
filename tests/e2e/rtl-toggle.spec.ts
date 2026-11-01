@@ -26,7 +26,7 @@ test('toggle flips to RTL Arabic, loads Plex for Arabic text, and persists acros
   await page.getByRole('button', { name: 'العربية' }).click();
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('نموذج الالتزام قبل الوصول');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('نموذج الالتزام قبل الوصول للطلاب الدوليين');
   expect(await loadedFaces(page)).toContain('IBM Plex Sans Arabic:400');
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow).toBeLessThanOrEqual(0);
