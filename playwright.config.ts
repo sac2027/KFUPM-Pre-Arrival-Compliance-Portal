@@ -26,7 +26,7 @@ export default defineConfig({
       url: `${PROD}/api/health`,
       reuseExistingServer: true,
       timeout: 180_000,
-      env: { WRANGLER_SEND_METRICS: 'false' },
+      env: { WRANGLER_SEND_METRICS: 'false', NO_PROXY: '*', no_proxy: '*' },
     },
     {
       command: 'npm run dev -- --host 127.0.0.1 --port 5174 --strictPort',

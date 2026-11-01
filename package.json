@@ -14,7 +14,7 @@
     "verify": "npm run typecheck && npm run lint && npm run test && npm run validate:terms",
     "validate:terms": "node --experimental-strip-types scripts/validate-terms.ts",
     "release:check": "npm run verify && npm run validate:terms -- --strict && npm run build",
-    "dev:api": "wrangler pages dev --port 8788 --ip 127.0.0.1",
+    "dev:api": "wrangler pages dev --port 8788 --ip 127.0.0.1 --inspector-port 0",
     "db:migrate:local": "wrangler d1 migrations apply pacf-roster --local && wrangler d1 migrations apply pacf-records --local",
     "db:migrate:remote": "wrangler d1 migrations apply pacf-roster --remote && wrangler d1 migrations apply pacf-records --remote",
     "serve:test": "npm run build && npm run db:migrate:local && npm run db:seed:local && npm run dev:api",
