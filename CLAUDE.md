@@ -10,7 +10,7 @@ Bilingual (EN LTR / AR RTL) Vite + React + TypeScript app replacing the legacy G
 - UI talks to I/O only through `src/services/authService.ts` and `dbService.ts` (the IT hand-off seams).
 - CSS logical properties only; no `left`/`right` in component CSS. Animate `transform`/`opacity` only; honour `prefers-reduced-motion`.
 - PII (passport, phone, name, signature) is memory-only: never in URLs, storage, or `console.*`.
-- Brand: use the supplied Full Stacked lockup and KFUPM Matrix unaltered. The KFUPM font is served as supplied (licence forbids modification/reproduction) and never renders user-entered text (ASCII-only coverage). Green `#009767` is never body text.
+- Brand (see plan Global Constraints): Full Stacked lockup and generator-exported FAST Matrix SVG unaltered; Seal only on the print view. Headlines = KFUPM Display, body and all typed text = IBM Plex Sans Arabic, fallback Segoe UI/system-ui. KFUPM Display is served as supplied (licence) and never renders user-entered text (ASCII-only). Green `#009767` is never body text. WCAG 4.5:1 wins over the brand chart where they differ.
 
 ## Skills by phase (load when the phase starts; they persist for the session, re-load after a context reset)
 - Planning / architecture: writing-plans, brainstorming, graphify (after the scaffold exists)

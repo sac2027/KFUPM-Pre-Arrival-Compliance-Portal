@@ -25,7 +25,8 @@ Looking like a student project or a generic template. Altering the lockup or Mat
 Arabic written by Claude and reviewed later. Not-working links shipped as placeholders. Login stays three fields; the date appears after sign-in. Fonts and brand assets supplied by KFUPM (Public Relations).
 
 ## Decisions (Claude's calls, to confirm)
-- Headings in the KFUPM font; body and all typed text in IBM Plex Sans / Plex Sans Arabic, because the KFUPM font is ASCII-only.
+- Per Brand Guidelines §7: headlines in KFUPM Display, body and all typed text in IBM Plex Sans Arabic (both scripts), fallback Segoe UI/system-ui. KFUPM Display is ASCII-only, so it never renders typed names.
+- Seal on the printable signed declaration only (Brand Guidelines §4: formal documents). Matrix once per screen from generator exports.
 - Form library react-hook-form + valibot; signature_pad for the canvas; Radix Tabs only.
 - The date is Gregorian with Latin digits, read-only, stamped at submit.
 
