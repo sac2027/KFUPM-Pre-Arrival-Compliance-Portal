@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 const good = { passportNumber: 'TEST0001', phoneNumber: '+966 50 000 0001', fullName: 'Eyad Salem', email: 'S202368990@kfupm.edu.sa' };
 
 test.describe('POST /api/verify', () => {
-  test.beforeEach(({}, info) => {
+  test.beforeEach((_fixtures, info) => {
     test.skip(info.project.name !== 'desktop-1280', 'not viewport dependent');
   });
 

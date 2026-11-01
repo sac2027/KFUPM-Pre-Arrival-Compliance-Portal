@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { parseRosterCsv, toUpsertSql } from '../../scripts/lib/roster';
 
@@ -29,8 +30,7 @@ describe('parseRosterCsv', () => {
     expect(parseRosterCsv('name,email\nx,y').errors[0]).toMatch(/header/);
   });
   it('reads the checked-in test roster: four students, the four supplied addresses', () => {
-    const fs = require('node:fs') as typeof import('node:fs');
-    const r = parseRosterCsv(fs.readFileSync('data/roster.sample.csv', 'utf8'));
+    const r = parseRosterCsv(readFileSync('data/roster.sample.csv', 'utf8'));
     expect(r.errors).toEqual([]);
     expect(r.rows.map((x) => x.email)).toEqual(['s202368990@kfupm.edu.sa', 'eyadsalem139@gmail.com', 'sac@kfupm.edu.sa', 'anas.ammari@kfupm.edu.sa']);
     expect(r.rows.map((x) => x.passport_number)).toEqual(['TEST0001', 'TEST0002', 'TEST0003', 'TEST0004']);

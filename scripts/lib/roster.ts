@@ -41,7 +41,7 @@ export function parseCsv(text: string): string[][] {
 export function parseRosterCsv(text: string): { rows: StudentRow[]; errors: string[] } {
   const errors: string[] = [];
   const rows: StudentRow[] = [];
-  const table = parseCsv(text.replace(/^﻿/, ''));
+  const table = parseCsv(text.replace(/^\uFEFF/, ''));
   const header = (table[0] ?? []).map((h) => h.trim().toLowerCase());
   if (header.join(',') !== HEADER.join(',')) {
     return { rows, errors: [`header must be exactly: ${HEADER.join(',')}`] };
