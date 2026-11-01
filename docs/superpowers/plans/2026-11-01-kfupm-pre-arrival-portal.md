@@ -14,7 +14,10 @@
 
 - Five terms exactly, in this order: `saudi-laws`, `cultural-norms`, `university-policies`, `representation`, `reporting`. Term text, titles and every external URL come from `src/data/compliance-terms.json`; no policy string or URL may appear in a `.tsx` file.
 - Document ref `KFUPM-INTL-PACF`, stage `Pre-Arrival`; byline "Deanship of Student Affairs • International Students Office".
-- Fonts: EN = IBM Plex Sans; AR = IBM Plex Sans Arabic. Self-hosted, never a third-party CDN.
+- Fonts (supplied in `KFUPM_Fonts.zip`): headings/display = `KFUPM` Regular/Bold/Black, served as the **unmodified TTFs** (its embedded licence: exclusive to KFUPM, no modification or reproduction — so no subsetting or format conversion, and the files are committed only if the repo is private). Body text and **all user-entered text** = IBM Plex Sans Arabic (supplied, OFL) and IBM Plex Sans Latin (OFL, `@fontsource`). The KFUPM font covers ASCII only (measured: no `ü Ç Ł ễ ị`, no Persian/Urdu letters), so it never renders typed names. Everything is self-hosted, never a third-party CDN.
+- Lockups: use only the supplied **Full Stacked** lockup (the guideline's *formal* lockup), colour on light surfaces and negative on Turquoise. Never recolour, crop, stretch, or rebuild it (Brand Architecture Guideline: "modifying or altering these lockups is strictly prohibited"). The Horizontal lockup is "informal" and is not used.
+- The KFUPM Matrix (diagonal stripe pattern) is used only from official artwork, unaltered; it is never redrawn by hand.
+- Login collects exactly three fields (passport number, phone number, full name). There is no Student ID. After login the declaration shows the student's full name and today's date (read-only, Gregorian, Latin digits); the submission is stamped with the signing time.
 - Brand colours (verbatim from the brand pack): Turquoise `#115F66`, Green `#009767`, Beige `#ECE0C7`, Sand `#AA8C6D`, Yellow/Gold `#F0BA45`, Gray `#ADACAD`, White `#FFFFFF`.
 - WCAG 2.2 AA: 4.5:1 body text, 3:1 large text and UI boundaries. Green `#009767` is 3.73:1 on white → never used for body text; text green is the derived token `--green-700: #00704D` (6.13:1 on white). Gold on white is 1.78:1 → gold is only ever used as an accent on Turquoise, or as a non-text rule.
 - Zero horizontal scroll from 320 px to 1920 px, both directions. All spacing uses CSS logical properties (`margin-inline-start`, `inset-inline-end`, …); no `left`/`right` in component CSS.
@@ -32,7 +35,8 @@ Inputs and conditions the brief implies but no single task would otherwise test;
 4. Signature submitted blank, or a canvas "signature" that is a single accidental dot → submit blocked until a minimum stroke length is drawn (Task 10).
 5. Uploaded signature that is a non-image, an SVG with scripts, a 40 MB photo, or a double-dropped file → rejected with a message; only PNG/JPEG ≤ 2 MB accepted (Task 10).
 6. Double-click on Submit or a failing `dbService.submit` → exactly one request in flight; failure shows a retry state, not a lost form (Task 11).
-7. Language toggled mid-form → entered values, checked boxes and drawn signature survive; direction flips without remount flicker (Task 8, Task 14).
+7. A name containing glyphs the KFUPM font lacks (`Nguyễn`, `Müller`, `Łukasz`, Urdu `ٹ`) renders in Plex with no tofu or metric jump → input/value font stack excludes KFUPM (Task 3).
+8. Language toggled mid-form → entered values, checked boxes and drawn signature survive; direction flips without remount flicker (Task 8, Task 14).
 
 ## File Structure
 
@@ -94,7 +98,7 @@ docs/HANDOFF.md                    what IT replaces, what staff edit
 
 - [ ] **Step 1: Write failing test** `contrast.test.ts`: parse `tokens.css`, assert for each declared text/background pairing `contrastRatio` ≥ 4.5 (body), ≥ 3 (large/UI). Fixed expectations: `#115F66`/`#FFFFFF` ≈ 7.36; `#00704D`/`#FFFFFF` ≥ 4.5; `#F0BA45`/`#115F66` ≈ 4.14 and registered as **large-text/UI only**.
 - [ ] **Step 2:** Run → FAIL.
-- [ ] **Step 3:** From `Full Stacked.png` and `Full Stacked - negative.png` produce 1× and 2× WebP/PNG lockups (colour for light surfaces, negative for Turquoise) and `__siteIcon__.png` as favicon. Hand-draw the diagonal stripe motif (from the brand guidelines) as an SVG. Write `tokens.css` with brand values verbatim plus derived tokens, each annotated with its pairing + ratio.
+- [ ] **Step 3:** Copy `Full Stacked.png` and `Full Stacked - negative.png` unmodified into `public/brand/` (scaled copies for 1×/2× only, aspect ratio locked) and `__siteIcon__.png` as favicon. Place the official KFUPM Matrix artwork (to be supplied as vector) unaltered. The Arabic lockup is a hard dependency: until it is supplied, Arabic mode uses the English lockup and the gap is tracked in `docs/HANDOFF.md`. Write `tokens.css` with brand values verbatim plus derived tokens, each annotated with its pairing + ratio.
 - [ ] **Step 4:** Run → PASS.
 - [ ] **Step 5: Commit** `feat(brand): add lockups, stripe motif, colour tokens and contrast test`
 
@@ -106,7 +110,7 @@ docs/HANDOFF.md                    what IT replaces, what staff edit
 
 - [ ] **Step 1: Write failing tests:** (a) `setLocale('ar')` → `document.documentElement.dir === 'rtl'` and `lang === 'ar'`; (b) `en.json` and `ar.json` have identical key sets; (c) missing key throws in dev, returns key in prod.
 - [ ] **Step 2:** Run → FAIL.
-- [ ] **Step 3:** Implement provider (locale persisted in `localStorage` inside try/catch; default from `navigator.language`). Import `@fontsource/ibm-plex-sans` (400/500/600) and `@fontsource/ibm-plex-sans-arabic` (same weights), `font-display: swap`. Toggle button is a labelled `aria-pressed` control showing the *other* language in its own script ("العربية" / "English").
+- [ ] **Step 3:** Implement provider (locale persisted in `localStorage` inside try/catch; default from `navigator.language`). `@font-face` for the three KFUPM TTFs as supplied (unmodified); IBM Plex Sans Arabic (Regular/Medium/SemiBold/Bold) from the supplied TTFs; `@fontsource/ibm-plex-sans` (400/500/600) for Latin body. `font-display: swap`. Stacks: headings `KFUPM, 'IBM Plex Sans'…`; body and inputs `'IBM Plex Sans', 'IBM Plex Sans Arabic'…` (never KFUPM). Test: computed `font-family` of every `input` and the receipt name excludes `KFUPM` (pins Review Focus 7). If KFUPM Arabic headings fail a visual shaping check, Arabic headings fall back to Plex Arabic. Toggle button is a labelled `aria-pressed` control showing the *other* language in its own script ("العربية" / "English").
 - [ ] **Step 4:** Run → PASS.
 - [ ] **Step 5: Commit** `feat(i18n): bidirectional provider, self-hosted Plex fonts, language toggle`
 
@@ -118,7 +122,7 @@ docs/HANDOFF.md                    what IT replaces, what staff edit
 
 - [ ] **Step 1: Write failing tests:** exactly 5 ids in the global order; every term has non-empty `en` and `ar`; every `linkId` resolves; every URL is `https:`; term 3 contains "appearance" (docx tracked change, typo "apperance" corrected); invalid fixture (missing `ar`) makes `loadTerms` throw with the offending path.
 - [ ] **Step 2:** Run → FAIL.
-- [ ] **Step 3:** Author JSON from the docx (EN) with the three links from the legacy page: Official Public Decency Regulations PDF, Overview, Saudi Culture and Customs Guide, all `status: "placeholder"` until KFUPM supplies the working URLs. Arabic drafted and flagged `"reviewStatus": "draft-needs-legal-review"`. `validate-terms.ts` prints a warning list of placeholders and exits non-zero on schema errors only.
+- [ ] **Step 3:** Author JSON from the docx (EN) with the three links from the legacy page: Official Public Decency Regulations PDF, Overview, Saudi Culture and Customs Guide, all `status: "placeholder"` until KFUPM supplies the working URLs. Arabic drafted by Claude at the user's request ("write the Arabic and we will review it") and flagged `"reviewStatus": "draft-needs-legal-review"` on every term; the three links are shipped now as the placeholder URLs per the user's instruction. `validate-terms.ts` prints a warning list of placeholders and exits non-zero on schema errors only.
 - [ ] **Step 4:** Run tests + `npm run validate:terms` → PASS (with placeholder warnings).
 - [ ] **Step 5: Commit** `feat(content): decouple policy terms and links into compliance-terms.json with validation`
 
@@ -149,7 +153,7 @@ docs/HANDOFF.md                    what IT replaces, what staff edit
 
 - [ ] **Step 1: Write failing tests:** reducer cannot reach `sign` without 5 accepted terms; cannot reach `terms` without a session; `back` from `sign` preserves accepted terms; stepper marks `aria-current="step"`.
 - [ ] **Step 2:** Run → FAIL.
-- [ ] **Step 3:** Load **frontend-design**, **design-taste-frontend**, **impeccable** now. Direction: Turquoise masthead carrying the negative lockup and gold rule; beige "paper" page; document card with `Document Ref` / `Stage` meta in tabular figures; stripe motif used once, as a quiet masthead edge. No photography (licensing unknown for the supplied portrait assets).
+- [ ] **Step 3:** Load **frontend-design**, **design-taste-frontend**, **impeccable** now. Direction: Turquoise masthead carrying the negative lockup and gold rule; beige "paper" page; document card with `Document Ref` / `Stage` meta in tabular figures; the official Matrix used once, unaltered, as a quiet masthead edge. Photography is optional: KFUPM has confirmed it owns the supplied identity assets; use at most one portrait on the login screen if it earns its place.
 - [ ] **Step 4:** Run → PASS; screenshot at 1280 and 360 px for review.
 - [ ] **Step 5: Commit** `feat(ui): official masthead, stepper and flow state machine`
 
@@ -169,7 +173,7 @@ docs/HANDOFF.md                    what IT replaces, what staff edit
 
 **Files:** Create `src/styles/motion.css`; modify `App.tsx`; Test `tests/e2e/flow.spec.ts`
 
-- [ ] **Step 1: Write failing e2e:** after login the Terms heading is focused; toggling to Arabic on the Terms step keeps checked boxes and the entered name (pins Review Focus 7).
+- [ ] **Step 1: Write failing e2e:** after login the Terms heading is focused; toggling to Arabic on the Terms step keeps checked boxes and the entered name (pins Review Focus 8).
 - [ ] **Step 2:** Run → FAIL.
 - [ ] **Step 3:** Load **animate** and **emil-design-eng**. Step transitions: 220 ms `cubic-bezier(0.23, 1, 0.32, 1)` opacity + 12 px translate in the reading direction (flips for RTL); exit is faster (140 ms); focus moves to the new step heading; all of it disabled under `prefers-reduced-motion`.
 - [ ] **Step 4:** Run → PASS.
@@ -181,7 +185,7 @@ docs/HANDOFF.md                    what IT replaces, what staff edit
 
 **Interfaces:** `<TermCheckbox id: TermId, checked: boolean, onChange(checked: boolean): void, label: ReactNode/>` built on a native `<input type="checkbox">` (visually hidden) so Space/Enter, forms and screen readers work.
 
-- [ ] **Step 1: Write failing tests:** five cards render in both locales from the JSON; "Continue" disabled until all five checked and announces "3 of 5 confirmed" via a polite live region; links open `target="_blank" rel="noopener noreferrer"` and show the placeholder status only in dev; `Select all` does **not** exist (each term is a deliberate act).
+- [ ] **Step 1: Write failing tests:** the declaration header shows the student's full name and today's date (read-only) as soon as the step opens; five cards render in both locales from the JSON; "Continue" disabled until all five checked and announces "3 of 5 confirmed" via a polite live region; links open `target="_blank" rel="noopener noreferrer"` and show the placeholder status only in dev; `Select all` does **not** exist (each term is a deliberate act).
 - [ ] **Step 2:** Run → FAIL.
 - [ ] **Step 3:** Tactile checkbox: press-down scale 0.94 at 80 ms, check-mark stroke draws in ~180 ms (SVG `stroke-dashoffset`), card border shifts to Turquoise and a gold inline-start rule grows on confirm; a "seal" progress meter fills 1/5 per term. Hit area ≥ 44×44 px, the whole card is the label.
 - [ ] **Step 4:** Run → PASS.
