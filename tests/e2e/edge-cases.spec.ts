@@ -1,4 +1,5 @@
 /** Production build: environment and input edge cases from the break-ui catalogue. */
+import { execFileSync } from 'node:child_process';
 import { expect, test } from '@playwright/test';
 import { clipped, confirmAllTerms, drawSignature, fillLogin, L, makePng, overflow, settleReceipt } from './helpers';
 import type { Locale } from './helpers';
@@ -40,6 +41,8 @@ test.describe('names that real students have', () => {
   });
 
   test('a withdrawn student gets the same generic answer as a stranger', async ({ page }) => {
+    // This passport only ever fails, so give it a fresh failure budget (the throttle is tested in verify-api.spec.ts).
+    execFileSync('npx', ['wrangler', 'd1', 'execute', 'pacf-records', '--local', '--command', `DELETE FROM verify_attempts WHERE key = 'p:${STUDENTS.withdrawn.passport}'`], { stdio: 'pipe', env: { ...process.env, WRANGLER_SEND_METRICS: 'false' } });
     await open(page, 'en');
     await fillLogin(page, 'en', STUDENTS.withdrawn);
     await expect(page.getByRole('alert')).toContainText('do not match our records');

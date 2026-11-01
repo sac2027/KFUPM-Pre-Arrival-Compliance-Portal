@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '../../components/Button';
+import { Icon } from '../../components/Icon';
 import { useI18n } from '../../i18n/I18nProvider';
 import { formatDateTime } from '../../lib/format';
 import type { TermId } from '../../lib/termsSchema';
@@ -122,10 +123,12 @@ export function ReceiptScreen({
         <EmailStatus status={{ ...document, emailTo: document.emailTo ?? session.student.email }} onRetry={() => void retry()} retrying={retrying} />
         <div className="receipt__actions">
           <Button type="button" busy={downloading} onClick={() => void download()}>
-            {t('receipt.download')}
+            <Icon name="download" />
+            <span>{t('receipt.download')}</span>
           </Button>
           <Button type="button" variant="quiet" onClick={() => window.print()}>
-            {t('receipt.print')}
+            <Icon name="print" />
+            <span>{t('receipt.print')}</span>
           </Button>
           {!confirming && (
             <button ref={finishRef} type="button" className="btn btn--quiet" onClick={() => setConfirming(true)}>

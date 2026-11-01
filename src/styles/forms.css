@@ -103,7 +103,15 @@
   font-weight: 500;
 }
 
+.icon {
+  flex: none;
+}
+
 .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
   justify-self: start;
   min-inline-size: min(11rem, 100%); /* "Sign in" and "Signing in…" occupy the same width; never wider than the screen */
   min-block-size: 3rem;

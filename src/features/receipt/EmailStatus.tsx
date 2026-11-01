@@ -1,4 +1,5 @@
 import { Button } from '../../components/Button';
+import { Icon } from '../../components/Icon';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { DocumentStatus } from '../../services/types';
 
@@ -16,15 +17,20 @@ export function EmailStatus({ status, onRetry, retrying }: { status: DocumentSta
   if (status.state === 'sent' || status.state === 'logged') {
     return (
       <p className="receipt__email receipt__email--sent" role="status">
-        {t('receipt.email.sent', { email })}
+        <Icon name="mail-sent" />
+        <span>{t('receipt.email.sent', { email })}</span>
       </p>
     );
   }
   return (
     <div className="receipt__email receipt__email--failed">
-      <p role="alert">{t('receipt.email.failed', { email })}</p>
+      <p role="alert">
+        <Icon name="mail-failed" />
+        <span>{t('receipt.email.failed', { email })}</span>
+      </p>
       <Button type="button" variant="quiet" busy={retrying} onClick={onRetry}>
-        {t('receipt.email.retry')}
+        <Icon name="retry" />
+        <span>{t('receipt.email.retry')}</span>
       </Button>
     </div>
   );

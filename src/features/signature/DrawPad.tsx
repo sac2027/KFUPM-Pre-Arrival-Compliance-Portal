@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import SignaturePad from 'signature_pad';
 import { Button } from '../../components/Button';
+import { Icon } from '../../components/Icon';
 import { useI18n } from '../../i18n/I18nProvider';
 import { MIN_STROKE_LENGTH, totalStrokeLength } from '../../lib/signature';
 
@@ -91,10 +92,12 @@ export function DrawPad({ onChange }: { onChange: (dataUrl: string | null) => vo
       )}
       <div className="pad__tools">
         <Button type="button" variant="quiet" onClick={undo}>
-          {t('sign.draw.undo')}
+          <Icon name="undo" />
+          <span>{t('sign.draw.undo')}</span>
         </Button>
         <Button type="button" variant="quiet" onClick={clear}>
-          {t('sign.draw.clear')}
+          <Icon name="clear" />
+          <span>{t('sign.draw.clear')}</span>
         </Button>
       </div>
     </div>

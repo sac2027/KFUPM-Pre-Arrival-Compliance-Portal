@@ -49,9 +49,9 @@ export function PrintSheet({
 
       <h2 className="print-sheet__title">{doc.title[locale]}</h2>
       <dl className="print-sheet__meta">
-        <dt>{t('doc.ref')}</dt>
+        <dt>{t('print.ref')}</dt>
         <dd translate="no">{doc.ref}</dd>
-        <dt>{t('doc.stage')}</dt>
+        <dt>{t('print.stage')}</dt>
         <dd>{doc.stage[locale]}</dd>
         <dt>{t('receipt.reference')}</dt>
         <dd translate="no">{receipt.referenceNumber}</dd>

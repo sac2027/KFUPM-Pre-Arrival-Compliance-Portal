@@ -1,6 +1,7 @@
 import * as Tabs from '@radix-ui/react-tabs';
 import { useRef, useState } from 'react';
 import { Button } from '../../components/Button';
+import { Icon } from '../../components/Icon';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { MessageKey } from '../../i18n/I18nProvider';
 import { loadTerms } from '../../lib/terms';
@@ -89,10 +90,12 @@ export function SignatureStep({
 
       <div className="sign__actions">
         <Button type="button" busy={pending} onClick={submit} aria-disabled={ready ? undefined : 'true'} aria-describedby={ready ? undefined : 'sign-incomplete'}>
-          {pending ? t('sign.submitting') : t('sign.submit')}
+          <Icon name="sign" />
+          <span>{pending ? t('sign.submitting') : t('sign.submit')}</span>
         </Button>
         <Button type="button" variant="quiet" onClick={onBack}>
-          {t('sign.back')}
+          <Icon name="back" />
+          <span>{t('sign.back')}</span>
         </Button>
       </div>
       {!ready && (

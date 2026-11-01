@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '../../components/Button';
+import { Icon } from '../../components/Icon';
 import { useI18n } from '../../i18n/I18nProvider';
 import { formatDate } from '../../lib/format';
 import { loadTerms } from '../../lib/terms';
@@ -134,7 +135,8 @@ export function TermsStep({
           aria-disabled={complete ? undefined : 'true'}
           aria-describedby={complete ? undefined : 'terms-incomplete'}
         >
-          {t('terms.continue')}
+          <span>{t('terms.continue')}</span>
+          <Icon name="forward" />
         </Button>
         {!complete && (
           <p id="terms-incomplete" className="terms__hint">
@@ -143,7 +145,8 @@ export function TermsStep({
         )}
         {onChangeDetails && !showLeave && (
           <button ref={changeRef} type="button" className="btn btn--quiet" onClick={() => setLeaving(true)}>
-            {t('terms.changeDetails')}
+            <Icon name="back" />
+            <span>{t('terms.changeDetails')}</span>
           </button>
         )}
       </div>

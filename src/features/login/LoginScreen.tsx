@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import type { FieldErrors, Resolver } from 'react-hook-form';
 import * as v from 'valibot';
 import { Button } from '../../components/Button';
+import { Icon } from '../../components/Icon';
 import { Field } from '../../components/Field';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { MessageKey } from '../../i18n/I18nProvider';
@@ -136,7 +137,8 @@ export function LoginScreen({ auth = authService, onLoggedIn, notice }: { auth?:
           </p>
         )}
         <Button type="submit" busy={pending}>
-          {pending ? t('login.submitting') : t('login.submit')}
+          <Icon name="sign-in" />
+          <span>{pending ? t('login.submitting') : t('login.submit')}</span>
         </Button>
       </form>
     </section>

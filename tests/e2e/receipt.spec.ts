@@ -59,7 +59,8 @@ test('leaves no personal data in the URL or browser storage, and Finish wipes th
     session: Object.keys(sessionStorage),
     cookie: document.cookie,
   }));
-  expect(new URL(leaks.url).search + new URL(leaks.url).hash).toBe('');
+  expect(new URL(leaks.url).search).toBe('');
+  expect(new URL(leaks.url).hash).toBe('#done'); // the step name only; nothing about the student
   expect(leaks.local).toEqual(['pacf.locale']);
   expect(leaks.session).toEqual([]);
   expect(leaks.cookie).toBe('');

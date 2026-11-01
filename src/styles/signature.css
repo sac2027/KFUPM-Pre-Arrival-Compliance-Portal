@@ -148,6 +148,17 @@
   outline-offset: 3px;
 }
 
+.drop__body {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  color: var(--turquoise);
+}
+
+.drop__body > span {
+  color: var(--ink);
+}
+
 .drop__browse {
   color: var(--green-700);
   font-weight: 600;

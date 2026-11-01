@@ -178,7 +178,7 @@ test.describe('other guideline checks', () => {
     await page.goto('/');
     await fillLogin(page, 'en', GOOD('en'));
     await expect(page.locator('.declarant dd').first()).toHaveAttribute('translate', 'no');
-    await expect(page.locator('.doc__meta dd').first()).toHaveAttribute('translate', 'no');
+    await expect(page.locator('.declarant dd').first()).toHaveAttribute('dir', 'auto');
   });
 
   test('the viewport allows pinch-zoom and has no cover-without-insets', async ({ page }) => {

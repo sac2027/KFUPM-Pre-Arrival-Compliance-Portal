@@ -74,6 +74,7 @@
 }
 
 .terms__list {
+  container-type: inline-size;
   display: grid;
   gap: 0.75rem;
   margin: 0;
@@ -88,7 +89,7 @@
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   gap: 1rem;
-  padding: 1.25rem 1rem;
+  padding: 20px 16px; /* px: on a phone with enlarged text, the padding must not eat the text column */
   background: color-mix(in srgb, var(--beige) 30%, white);
   transition: background-color var(--dur-fast) var(--ease-out);
 }
@@ -206,5 +207,17 @@
 @media (min-width: 48rem) {
   .term {
     padding: 1.5rem;
+  }
+}
+
+/* A card narrower than about 15 of its own ems (a phone with text enlarged): the box sits above the text. */
+@container (max-width: 15rem) {
+  .term {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+
+  .term__title {
+    font-size: 1rem;
   }
 }
