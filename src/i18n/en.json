@@ -33,5 +33,6 @@
   "error.phone": "Enter a phone number with its country code, for example +966 55 123 4567.",
   "error.name": "Enter your full name (2–100 letters) as it appears on your passport.",
   "error.login": "We couldn't sign you in. Check your details and try again.",
-  "error.network": "Can't reach the server. Check your connection and try again."
+  "error.network": "Can't reach the server. Check your connection and try again.",
+  "terms.heading": "Terms and responsibilities"
 }

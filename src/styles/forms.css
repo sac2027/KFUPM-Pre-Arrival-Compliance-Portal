@@ -101,6 +101,12 @@
   cursor: progress;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .btn:active {
+    transform: none;
+  }
+}
+
 @media (max-width: 30rem) {
   .btn {
     justify-self: stretch;

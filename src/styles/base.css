@@ -86,15 +86,20 @@ textarea {
   outline-offset: 3px;
 }
 
+/* Gentler, not zero: animations and smooth scrolling stop; each component keeps (or drops) its own transitions. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Step headings take programmatic focus (not tab stops), so they carry no ring. */
+[data-step-heading]:focus {
+  outline: none;
 }
 
 .sr-only {

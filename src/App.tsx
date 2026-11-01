@@ -1,7 +1,9 @@
 import { useReducer } from 'react';
 import { Masthead } from './components/Masthead';
+import { StepPanel } from './components/StepPanel';
 import { Stepper } from './components/Stepper';
 import { LoginScreen } from './features/login/LoginScreen';
+import { TermsStep } from './features/terms/TermsStep';
 import { I18nProvider, useI18n } from './i18n/I18nProvider';
 import { loadTerms } from './lib/terms';
 import { flowReducer, initialFlowState } from './state/flow';
@@ -33,7 +35,10 @@ function Shell() {
             </dl>
           </header>
           <p className="doc__intro">{doc.intro[locale]}</p>
-          {flow.step === 'login' && <LoginScreen onLoggedIn={(session) => dispatch({ type: 'loggedIn', session })} />}
+          <StepPanel step={flow.step}>
+            {flow.step === 'login' && <LoginScreen onLoggedIn={(session) => dispatch({ type: 'loggedIn', session })} />}
+            {flow.step === 'terms' && <TermsStep />}
+          </StepPanel>
         </article>
       </main>
       <footer className="page__footer">

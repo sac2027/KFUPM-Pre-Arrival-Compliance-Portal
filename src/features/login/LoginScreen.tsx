@@ -72,7 +72,7 @@ export function LoginScreen({ auth = authService, onLoggedIn }: { auth?: AuthSer
 
   return (
     <section className="login" aria-labelledby="login-heading">
-      <h2 id="login-heading">{t('login.heading')}</h2>
+      <h2 id="login-heading" data-step-heading tabIndex={-1}>{t('login.heading')}</h2>
       <p className="login__intro">{t('login.intro')}</p>
       <form className="form" noValidate onSubmit={onSubmit}>
         <Field

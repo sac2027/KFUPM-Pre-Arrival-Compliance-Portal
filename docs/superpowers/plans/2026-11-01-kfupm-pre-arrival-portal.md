@@ -178,7 +178,7 @@ docs/HANDOFF.md                    what IT replaces, what staff edit
 
 - [ ] **Step 1: Write failing e2e:** after login the Terms heading is focused; toggling to Arabic on the Terms step keeps checked boxes and the entered name (pins Review Focus 8).
 - [ ] **Step 2:** Run → FAIL.
-- [ ] **Step 3:** Load **animate** and **emil-design-eng**. Step transitions: 220 ms `cubic-bezier(0.23, 1, 0.32, 1)` opacity + 12 px translate in the reading direction (flips for RTL); exit is faster (140 ms); focus moves to the new step heading; all of it disabled under `prefers-reduced-motion`.
+- [ ] **Step 3:** Load **animate** and **emil-design-eng**. Step transitions: a CSS transition from `@starting-style` (220 ms `cubic-bezier(0.23, 1, 0.32, 1)`, opacity + 12 px translate starting at the inline-end, so the offset flips in RTL, reversed when going back); **no exit animation** (new content is never delayed for a once-per-session action); focus moves to the new step heading; under `prefers-reduced-motion` the travel is dropped and a 160 ms fade stays ("gentler, not zero"). Nothing animates on first load. The Terms step ships a heading-only stub here; Task 9 fills it.
 - [ ] **Step 4:** Run → PASS.
 - [ ] **Step 5: Commit** `feat(ui): direction-aware step transitions and focus management`
 
