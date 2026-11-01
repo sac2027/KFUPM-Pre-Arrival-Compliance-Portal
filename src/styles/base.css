@@ -21,10 +21,36 @@ body {
   overflow-wrap: break-word;
 }
 
+input,
+textarea,
+select,
+button {
+  font-family: var(--font-body);
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+.skip-link {
+  position: absolute;
+  inset-block-start: 0.5rem;
+  inset-inline-start: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--turquoise);
+  color: var(--white);
+  border-radius: var(--radius-s);
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
 h1,
 h2,
 h3 {
   margin: 0;
+  font-weight: 700;
   font-family: var(--font-display);
   color: var(--heading);
   text-wrap: balance;
