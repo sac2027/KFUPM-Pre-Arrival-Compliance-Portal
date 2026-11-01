@@ -97,6 +97,22 @@
   transform: scale(0.98);
 }
 
+.btn--quiet {
+  min-inline-size: 2.75rem;
+  padding-inline: 0.75rem;
+  background: transparent;
+  color: var(--turquoise);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.3em;
+  text-decoration-color: transparent;
+}
+
+.btn--quiet:hover {
+  background: transparent;
+  text-decoration-color: currentColor;
+}
+
 .btn[aria-busy='true'] {
   cursor: progress;
 }

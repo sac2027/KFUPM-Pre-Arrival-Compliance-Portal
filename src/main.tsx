@@ -7,6 +7,7 @@ import './styles/base.css';
 import './styles/shell.css';
 import './styles/forms.css';
 import './styles/terms.css';
+import './styles/signature.css';
 import './styles/motion.css';
 
 const root = document.getElementById('root');

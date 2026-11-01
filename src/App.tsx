@@ -3,9 +3,11 @@ import { Masthead } from './components/Masthead';
 import { StepPanel } from './components/StepPanel';
 import { Stepper } from './components/Stepper';
 import { LoginScreen } from './features/login/LoginScreen';
+import { SignatureStep } from './features/signature/SignatureStep';
 import { TermsStep } from './features/terms/TermsStep';
 import { I18nProvider, useI18n } from './i18n/I18nProvider';
 import { loadTerms } from './lib/terms';
+import { dbService } from './services/dbService';
 import { flowReducer, initialFlowState } from './state/flow';
 
 const TERMS = loadTerms();
@@ -42,6 +44,22 @@ function Shell() {
                 session={flow.session}
                 initialAccepted={flow.acceptedTermIds}
                 onContinue={(ids) => dispatch({ type: 'termsAccepted', ids })}
+              />
+            )}
+            {flow.step === 'sign' && flow.session && (
+              <SignatureStep
+                onBack={() => dispatch({ type: 'back' })}
+                onSubmit={async (signature) => {
+                  const receipt = await dbService.submitCompliance({
+                    session: flow.session!,
+                    locale,
+                    documentRef: 'KFUPM-INTL-PACF',
+                    acceptedTermIds: flow.acceptedTermIds,
+                    signature,
+                    submittedAt: new Date().toISOString(),
+                  });
+                  dispatch({ type: 'submitted', receipt });
+                }}
               />
             )}
           </StepPanel>

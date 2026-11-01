@@ -15,9 +15,11 @@
     "validate:terms": "node --experimental-strip-types scripts/validate-terms.ts"
   },
   "dependencies": {
+    "@radix-ui/react-tabs": "^1.2.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-hook-form": "^7.91.0",
+    "signature_pad": "^5.1.4",
     "valibot": "^1.5.0"
   },
   "devDependencies": {
