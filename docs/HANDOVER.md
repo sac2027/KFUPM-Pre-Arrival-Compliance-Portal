@@ -70,19 +70,27 @@ exact (spaces and `+`/`00` are forgiven). To add real students later, make a CSV
 `data/roster.sample.csv` and run the same command with your file. Re-running updates students by passport number.
 `data/roster.e2e.csv` is for the automated tests only; do not import it to production.
 
-## 5. Secrets and settings in the Pages project
+## 5. Settings and secrets
 
-Dashboard: **Workers & Pages → kfupm-pre-arrival-compliance-portal → Settings → Variables and secrets**, environment
-**Production** (repeat for Preview if you use preview deployments):
+Because the project has a `wrangler.jsonc`, Cloudflare treats that file as the source of truth for the plain settings
+(the dashboard greys them out). So:
 
-| Name | Type | Value |
-| --- | --- | --- |
-| `SESSION_SECRET` | Secret | a long random string: run `openssl rand -base64 48` and paste the output |
-| `EMAIL_MODE` | Text | `resend` (anything else means "log only, send nothing") |
-| `RESEND_API_KEY` | Secret | from step 6 |
-| `EMAIL_FROM` | Text | see step 6 |
-| `EMAIL_REPLY_TO` | Text | `eyadsalem139@gmail.com` for now, later the deanship mailbox |
-| `EMAIL_BCC` | Text | optional: a mailbox that should receive a copy of every declaration |
+**a) Plain settings go in `wrangler.jsonc`, then commit and push.** In the `vars` block set:
+
+| Name | Value |
+| --- | --- |
+| `EMAIL_MODE` | `"resend"` (anything else means "log only, send nothing") |
+| `EMAIL_FROM` | see step 6 (`"KFUPM Student Affairs <onboarding@resend.dev>"` for the first test) |
+| `EMAIL_REPLY_TO` | `"eyadsalem139@gmail.com"` for now, later the deanship mailbox |
+| `EMAIL_BCC` | optional: a mailbox that should receive a copy of every declaration |
+
+**b) The two secrets go in the dashboard**: **Workers & Pages → kfupm-pre-arrival-compliance-portal → Settings →
+Variables and secrets → Add → type Secret**, environment **Production** (repeat for Preview if you use it):
+
+| Name | Value |
+| --- | --- |
+| `SESSION_SECRET` | a long random string: run `openssl rand -base64 48` and paste the output |
+| `RESEND_API_KEY` | from step 6 |
 
 The three bindings (`ROSTER`, `RECORDS`, `DOCUMENTS`) come from `wrangler.jsonc` automatically on the next deployment. If
 the dashboard's **Bindings** tab does not show them after deploying, add them there by hand with the same names.
