@@ -11,7 +11,7 @@
     { "binding": "ROSTER", "database_name": "pacf-roster", "database_id": "38873978-578a-4839-868e-84229a2dd7f5", "migrations_dir": "migrations/roster" },
     { "binding": "RECORDS", "database_name": "pacf-records", "database_id": "4bcfed2c-6a37-42d4-b6c0-fe183a3b50d5", "migrations_dir": "migrations/records" }
   ],
-  "r2_buckets": [{ "binding": "DOCUMENTS", "bucket_name": "pacf-documents" }],
+  "r2_buckets": [{ "binding": "DOCUMENTS", "bucket_name": "pacf-records-bucket" }],
 
   // Non-secret settings. Secrets (SESSION_SECRET, RESEND_API_KEY) live in .dev.vars locally and in the
   // Pages project's encrypted variables in production.
