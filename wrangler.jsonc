@@ -16,7 +16,7 @@
   // Non-secret settings. Secrets (SESSION_SECRET, RESEND_API_KEY) live in .dev.vars locally and in the
   // Pages project's encrypted variables in production.
   "vars": {
-    "EMAIL_MODE": "log",
+    "EMAIL_MODE": "resend",
     "EMAIL_FROM": "KFUPM Student Affairs <onboarding@resend.dev>",
     "EMAIL_REPLY_TO": "eyadsalem139@gmail.com",
     "EMAIL_BCC": ""
