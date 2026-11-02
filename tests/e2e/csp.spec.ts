@@ -1,7 +1,8 @@
 /** Enforces the real Content-Security-Policy from public/_headers and walks the whole flow: nothing may be blocked. */
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
-import { confirmAllTerms, drawSignature, fillLogin, L, makePng } from './helpers';
+import { confirmAllTerms, drawSignature, fillLogin, L, makePng, settleReceipt } from './helpers';
+import { STUDENTS } from './students';
 
 const HEADERS = readFileSync('public/_headers', 'utf8');
 const CSP = /Content-Security-Policy:\s*(.+)/.exec(HEADERS)![1]!.trim();
@@ -27,7 +28,7 @@ test('the whole flow runs under the production CSP with no violations and no con
 
   await page.goto('/');
   await page.evaluate(() => document.fonts.ready);
-  await fillLogin(page, 'en', { passport: 'N1234567', phone: '+966551234567', name: 'Mai Nguyễn' });
+  await fillLogin(page, 'en', STUDENTS.mai);
   await expect(page.locator('#terms-heading')).toBeFocused();
   await confirmAllTerms(page, 'en');
 
@@ -38,6 +39,7 @@ test('the whole flow runs under the production CSP with no violations and no con
   await expect(page.getByRole('img', { name: 'Your uploaded signature' })).toBeVisible();
   await page.getByRole('button', { name: s.submit }).click();
   await expect(page.getByRole('heading', { level: 2, name: s.heading })).toBeFocused({ timeout: 8000 });
+  await settleReceipt(page);
 
   // Fonts, the lockup, the Matrix and the seal all load from 'self'.
   expect(await page.evaluate(async () => (await document.fonts.ready, [...document.fonts].filter((f) => f.status === 'loaded').length))).toBeGreaterThanOrEqual(2);

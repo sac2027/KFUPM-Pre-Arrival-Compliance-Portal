@@ -1,16 +1,14 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { fillLogin } from './helpers';
+import { byLocale, STUDENTS } from './students';
 
 type Locale = 'en' | 'ar';
 
-async function toTerms(page: Page, locale: Locale = 'en', name = locale === 'en' ? 'Mai Nguyễn' : 'محمد عبدالله') {
+async function toTerms(page: Page, locale: Locale = 'en', creds = byLocale(locale)) {
   await page.addInitScript((l) => localStorage.setItem('pacf.locale', l), locale);
   await page.goto('/');
-  const L = locale === 'en';
-  await page.getByLabel(L ? 'Passport number' : 'رقم جواز السفر').fill('N1234567');
-  await page.getByLabel(L ? 'Phone number' : 'رقم الهاتف').fill('+966551234567');
-  await page.getByLabel(L ? 'Full name' : 'الاسم الكامل').fill(name);
-  await page.getByRole('button', { name: L ? 'Sign in' : 'تسجيل الدخول' }).click();
+  await fillLogin(page, locale, creds);
   await expect(page.getByRole('heading', { level: 2 })).toBeFocused();
   await page.evaluate(() => document.fonts.ready);
 }
@@ -29,7 +27,7 @@ const noOverflow = (page: Page) =>
 
 test('shows the declarant, the sign-in date, five unchecked terms and no select-all', async ({ page }) => {
   await toTerms(page);
-  await expect(page.locator('.declarant')).toContainText('Mai Nguyễn');
+  await expect(page.locator('.declarant')).toContainText('Nguyen Thi Mai'); // the roster's name, not the typed one
   await expect(page.locator('.declarant')).toContainText(/\d{1,2} \w+ 2026/);
   await expect(page.locator('.term')).toHaveCount(5);
   await expect(page.getByRole('checkbox', { checked: true })).toHaveCount(0);
@@ -120,7 +118,7 @@ test('the progress meter stays in view on tall screens, and gets out of the way 
 
 for (const locale of ['en', 'ar'] as const) {
   test(`worst-case name and long terms fit the viewport (${locale})`, async ({ page }) => {
-    await toTerms(page, locale, 'م'.repeat(100));
+    await toTerms(page, locale, STUDENTS.longName); // a 190-character roster name
     expect(await noOverflow(page)).toEqual({ overflow: 0, escapes: [] });
     for (let i = 0; i < 5; i++) await page.locator('.term').nth(i).locator('.term__title label').click();
     expect(await noOverflow(page)).toEqual({ overflow: 0, escapes: [] });

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { ChangeEvent, DragEvent } from 'react';
 import { Button } from '../../components/Button';
+import { Icon } from '../../components/Icon';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { MessageKey } from '../../i18n/I18nProvider';
 import { rasteriseImage, SignatureImageError, sniffImageType, validateSignatureFile } from '../../lib/signature';
@@ -64,7 +65,10 @@ export function UploadZone({
       >
         <input className="drop__input" type="file" accept="image/png,image/jpeg" onChange={onInput} aria-describedby="upload-hint" />
         <span className="drop__body">
-          {t('sign.upload.prompt')} <span className="drop__browse">{t('sign.upload.browse')}</span>
+          <Icon name="upload" size={22} />
+          <span>
+            {t('sign.upload.prompt')} <span className="drop__browse">{t('sign.upload.browse')}</span>
+          </span>
         </span>
       </label>
       <p className="pad__hint" id="upload-hint">

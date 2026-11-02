@@ -1,6 +1,97 @@
-/* The signed declaration exists only for print / save-as-PDF. */
+/* The signed declaration exists only for print / save-as-PDF, and for the off-screen capture that makes the PDF file. */
 .print-sheet {
   display: none;
+}
+
+.print-sheet--capture {
+  display: block;
+  padding: 0;
+  color: #000;
+  font-size: 13px;
+  line-height: 1.5;
+  background: #fff;
+}
+
+.print-sheet--capture p {
+  margin: 0 0 10px;
+}
+
+.print-sheet--capture .print-sheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.print-sheet--capture .print-sheet__logo {
+  inline-size: 190px;
+  block-size: auto;
+}
+
+.print-sheet--capture .print-sheet__seal {
+  inline-size: 80px;
+  block-size: auto;
+}
+
+.print-sheet--capture .print-sheet__band {
+  block-size: 36px;
+  margin-block: 4px 16px;
+  background-color: var(--beige);
+  background-image: url('/brand/matrix/matrix-beige-sand.svg');
+  background-size: cover;
+  background-position: right bottom;
+}
+
+[dir='rtl'] .print-sheet--capture .print-sheet__band {
+  background-position: left bottom;
+}
+
+.print-sheet--capture .print-sheet__title {
+  margin-block-end: 8px;
+  font-size: 21px;
+  line-height: 1.2;
+}
+
+.print-sheet--capture .print-sheet__meta {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 16px;
+  row-gap: 4px;
+  margin: 0 0 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.print-sheet--capture .print-sheet__meta dt {
+  color: var(--turquoise);
+  font-weight: 500;
+}
+
+.print-sheet--capture .print-sheet__meta dd {
+  margin: 0;
+}
+
+.print-sheet--capture .print-sheet__terms {
+  margin: 12px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.print-sheet--capture .print-sheet__terms li {
+  margin-block-end: 12px;
+}
+
+.print-sheet--capture .print-sheet__terms h3 {
+  margin: 0 0 4px;
+  font-size: 14px;
+}
+
+.print-sheet--capture .print-sheet__sign {
+  margin-block-start: 20px;
+}
+
+.print-sheet--capture .print-sheet__signature {
+  max-block-size: 90px;
+  max-inline-size: 260px;
+  margin-block-end: 12px;
 }
 
 @media print {

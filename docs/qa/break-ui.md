@@ -48,3 +48,20 @@ Also added: `npm run validate:terms` now warns when staff-written text is long e
 - Uploads of 4000×200, 200×4000 and 8000×6000 images are downscaled, undistorted and fit their preview.
 - RTL, the language toggle mid-flow, reduced motion, and the printed PDF.
 - The production bundle contains none of the stress data, the toggle or the dev hooks (a test builds it and searches it).
+
+## Phase 2 additions (2026-11-02)
+
+New surfaces: the email field, the roster-backed sign-in, the receipt's email line, the browser-rendered PDF.
+
+| # | Severity | Field | Worst-case value | What happened | Fix |
+| --- | --- | --- | --- | --- | --- |
+| 11 | Broken | all steps | text at 200% on a 320–360 px phone | Every rem-based gutter and padding doubled too, leaving 24–64 px for a term's title, which wrapped one syllable per line into a 720 px-tall label | Gutters and card padding on phones in px; a container query stacks the checkbox above the text when a card is narrower than 15 of its own ems |
+| 12 | Broken | sign-in (shared IP) | twenty students signing in from one lab | The first throttle counted successful sign-ins per IP and locked the whole network out after twenty | Only failures count (5 per passport, 100 per IP, 15 min); a success clears the passport's counter |
+| 13 | Ugly | masthead | 320 px | The lockup's optical negative margin pushed it 4 px past the screen edge | The margin applies from 48 rem up only |
+| 14 | Fragile | sign-in | `+966 50 000 0001` typed as `0500000001` | Could never match the roster (E.164 on both sides) and the generic message would not explain why | The form requires the country code and says so before anything is sent |
+| 15 | Fragile | email | `S202368990@KFUPM.edu.sa ` with a trailing space | Case and whitespace differences would fail the match | Both sides lower-cased and trimmed before comparing |
+| 16 | Fragile | receipt | 254-character email, plus-addressing, long names | Fits at every width; the masked form (`s•••@kfupm.edu.sa`) stays short | No change needed |
+
+Held up: the `?data=worst` dataset with the 190-character roster name, the 64-character email tested at the form, the
+upload tab, the PDF with a long name (one page, identical bytes stored, emailed and downloaded), Back/Forward at every
+step, the throttle under the whole test suite's failures (counters are cleared per run).

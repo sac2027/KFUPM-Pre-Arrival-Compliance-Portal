@@ -30,8 +30,9 @@ for (const locale of ['en', 'ar'] as const) {
       await open(page, locale);
       const box = await page.locator('.masthead__logo').boundingBox();
       expect(Math.abs(box!.width / box!.height - 2657 / 1083)).toBeLessThan(0.03);
-      const transform = await page.locator('.masthead__matrix').evaluate((e) => getComputedStyle(e).transform);
+      const transform = await page.locator('.page-matrix').evaluate((e) => getComputedStyle(e).transform);
       expect(transform).toBe('none');
+      expect(await page.locator('.masthead .page-matrix, .masthead__matrix').count()).toBe(0); // no Matrix in the heading
     });
 
     test('masthead sits on the correct side and headings use KFUPM Display', async ({ page }) => {

@@ -12,8 +12,10 @@ import type { Session } from '../../src/services/types';
 const TERMS = loadTerms();
 const session: Session = {
   sessionId: 's-1',
-  student: { passportNumber: 'A1234567', phoneNumber: '+966551234567', fullName: 'Mai Nguyễn' },
+  student: { fullName: 'Mai Nguyễn', email: 'm•••@example.com', passportLast4: '4567' },
   issuedAt: '2026-11-01T10:00:00.000Z',
+  expiresAt: '2026-11-01T10:30:00.000Z',
+  token: 't',
 };
 
 function setup(locale: Locale = 'en', initialAccepted: TermId[] = [], who: Session = session) {
@@ -119,5 +121,42 @@ describe('TermsStep', () => {
     setup('ar', [], long);
     const name = screen.getByText('م'.repeat(100));
     expect(name.closest('[dir]')?.getAttribute('dir')).toBe('auto');
+  });
+});
+
+describe('TermsStep: changing details', () => {
+  function setupWithChange(leaveRequested = false) {
+    const onChangeDetails = vi.fn();
+    const onCancelLeave = vi.fn();
+    render(
+      <I18nProvider initialLocale="en">
+        <TermsStep session={session} initialAccepted={[]} onContinue={() => {}} onChangeDetails={onChangeDetails} leaveRequested={leaveRequested} onCancelLeave={onCancelLeave} />
+      </I18nProvider>,
+    );
+    return { onChangeDetails, onCancelLeave, user: userEvent.setup() };
+  }
+  it('asks before ending the verified session, then calls back', async () => {
+    const { onChangeDetails, user } = setupWithChange();
+    await user.click(screen.getByRole('button', { name: 'Change my details' }));
+    expect(onChangeDetails).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert')).toHaveTextContent('ends your verified sign-in');
+    const yes = screen.getByRole('button', { name: 'Yes, sign in again' });
+    expect(yes).toHaveFocus();
+    await user.click(yes);
+    expect(onChangeDetails).toHaveBeenCalledTimes(1);
+  });
+  it('lets the student stay, returning focus to where they were', async () => {
+    const { onChangeDetails, user } = setupWithChange();
+    await user.click(screen.getByRole('button', { name: 'Change my details' }));
+    await user.click(screen.getByRole('button', { name: 'Stay here' }));
+    expect(onChangeDetails).not.toHaveBeenCalled();
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Change my details' })).toHaveFocus();
+  });
+  it('shows the same question when the browser Back button asked to leave', async () => {
+    const { onCancelLeave, user } = setupWithChange(true);
+    expect(screen.getByRole('alert')).toHaveTextContent('ends your verified sign-in');
+    await user.click(screen.getByRole('button', { name: 'Stay here' }));
+    expect(onCancelLeave).toHaveBeenCalledTimes(1);
   });
 });

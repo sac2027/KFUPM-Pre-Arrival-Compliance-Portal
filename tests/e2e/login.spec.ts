@@ -1,81 +1,93 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { fillLogin, L, overflow } from './helpers';
+import { STUDENTS } from './students';
 
 const open = async (page: Page, locale: 'en' | 'ar' = 'en') => {
   await page.addInitScript((l) => localStorage.setItem('pacf.locale', l), locale);
   await page.goto('/');
   await page.evaluate(() => document.fonts.ready);
 };
-const noOverflow = (page: Page) =>
-  page.evaluate(() => {
-    const w = document.documentElement.clientWidth;
-    const escapes = [...document.querySelectorAll('body *')]
-      .filter((el) => {
-        const r = el.getBoundingClientRect();
-        return r.width > 0 && getComputedStyle(el).position !== 'absolute' && (r.left < -0.5 || r.right > w + 0.5);
-      })
-      .map((el) => `${el.tagName}.${el.className}`);
-    return { overflow: document.documentElement.scrollWidth - innerWidth, escapes };
-  });
-const fill = async (page: Page, passport: string, phone: string, name: string) => {
-  await page.getByLabel(/passport number|رقم جواز السفر/i).fill(passport);
-  await page.getByLabel(/phone number|رقم الهاتف/i).fill(phone);
-  await page.getByLabel(/full name|الاسم الكامل/i).fill(name);
-};
 
-test('empty submit shows three errors, focuses the first field, and never scrolls sideways', async ({ page }) => {
+test('empty submit shows four errors, focuses the first field, and never scrolls sideways', async ({ page }) => {
   await open(page);
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByText('This field is required.')).toHaveCount(3);
+  await expect(page.getByText('This field is required.')).toHaveCount(4);
   await expect(page.getByLabel('Passport number')).toBeFocused();
-  expect(await noOverflow(page)).toEqual({ overflow: 0, escapes: [] });
+  expect(await overflow(page)).toEqual({ overflow: 0, escapes: [] });
 });
 
-for (const [name, passport, phone, full] of [
-  ['an Arabic name with Arabic-Indic digits', 'N١٢٣٤٥٦٧', '+٩٦٦ ٥٥ ١٢٣ ٤٥٦٧', 'محمد عبدالله الغامدي'],
-  ['a Vietnamese name', 'B1234567', '+84 912 345 678', 'Nguyễn Thị Mai'],
-] as const) {
-  test(`signs in with ${name} and moves to the next step`, async ({ page }) => {
-    await open(page);
-    await fill(page, passport, phone, full);
-    await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page.locator('.stepper [aria-current="step"]')).toContainText('Review terms', { timeout: 5000 });
-    await expect(page.getByRole('heading', { level: 2, name: 'Sign in' })).toHaveCount(0);
-  });
-}
+test('a roster student signs in and sees the terms; the declaration carries the roster name', async ({ page }) => {
+  await open(page);
+  await fillLogin(page, 'en', STUDENTS.eyad);
+  await expect(page.locator('.stepper [aria-current="step"]').first()).toContainText('Review terms', { timeout: 10_000 });
+  await expect(page.locator('.declarant')).toContainText('Eyad Salem');
+});
+
+test('Arabic-Indic digits and spacing in the typed details still verify', async ({ page }) => {
+  await open(page, 'ar');
+  await fillLogin(page, 'ar', { passport: 'e2e٠٠٠٠٢', phone: '+٩٦٦ ٥٥ ١٢٣ ٤٥٦٧', email: ' EyadSalem139@Gmail.com ', name: 'mohammed alghamdi' });
+  await expect(page.locator('#terms-heading')).toBeFocused({ timeout: 10_000 });
+  await expect(page.locator('.declarant')).toContainText('Mohammed Abdullah Alghamdi');
+});
+
+test('a phone without a country code is explained before anything is sent', async ({ page }) => {
+  await open(page);
+  let requests = 0;
+  page.on('request', (r) => r.url().includes('/api/verify') && requests++);
+  await fillLogin(page, 'en', { ...STUDENTS.eyad, phone: '0500000001' });
+  await expect(page.locator('#phone-error')).toContainText('Start with your country code');
+  expect(requests).toBe(0);
+});
+
+test('one wrong detail gets the generic message, keeps the form filled, and a corrected retry succeeds', async ({ page }) => {
+  await open(page);
+  await fillLogin(page, 'en', { ...STUDENTS.eyad, email: 'wrong@example.com' });
+  const alert = page.getByRole('alert');
+  await expect(alert).toContainText('do not match our records');
+  const forEmail = await alert.textContent();
+  await page.getByLabel('Email address').fill(STUDENTS.eyad.email);
+  await page.getByLabel('Phone number').fill('+966500000009');
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await expect(alert).toBeVisible();
+  expect(await alert.textContent()).toBe(forEmail); // identical for a wrong phone: never says which one
+  await page.getByLabel('Phone number').fill(STUDENTS.eyad.phone);
+  await expect(page.getByLabel('Full name')).toHaveValue('Eyad Salem');
+  await page.getByLabel('Email address').fill(STUDENTS.eyad.email);
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await expect(page.locator('#terms-heading')).toBeFocused({ timeout: 10_000 });
+});
 
 for (const locale of ['en', 'ar'] as const) {
   test(`worst case input at this width stays inside the viewport (${locale})`, async ({ page }) => {
     await open(page, locale);
-    // 100 unbroken Arabic letters, a 20-char passport, an invalid 18-digit phone: validation errors are visible too.
-    await fill(page, 'A'.repeat(20), '1'.repeat(18), 'م'.repeat(100));
-    await page.getByLabel(/full name|الاسم الكامل/i).blur();
-    await page.getByRole('button', { name: /Sign in|تسجيل الدخول/ }).click();
+    const s = L(locale);
+    await page.getByLabel(s.passport).fill('A'.repeat(20));
+    await page.getByLabel(s.phone).fill('1'.repeat(18)); // no country code: a visible error
+    await page.getByLabel(s.email).fill(`${'a'.repeat(64)}@${'b'.repeat(63)}.${'c'.repeat(63)}.com`);
+    await page.getByLabel(s.name).fill('م'.repeat(100));
+    await page.getByRole('button', { name: s.signin }).click();
     await expect(page.locator('.field__error')).toHaveCount(1); // only the phone is invalid
-    expect(await noOverflow(page)).toEqual({ overflow: 0, escapes: [] });
+    expect(await overflow(page)).toEqual({ overflow: 0, escapes: [] });
   });
 }
 
-test('100 unbroken Latin letters in the name do not overflow', async ({ page }) => {
-  await open(page);
-  await fill(page, 'AB1234567', '+966551234567', 'W'.repeat(100));
-  expect(await noOverflow(page)).toEqual({ overflow: 0, escapes: [] });
-});
-
-test('RTL: passport and phone stay LTR but sit flush with the Arabic labels; name follows its text', async ({ page }) => {
+test('RTL: passport, phone and email stay LTR but sit flush with the Arabic labels; name follows its text', async ({ page }) => {
   await open(page, 'ar');
-  const passport = page.getByLabel('رقم جواز السفر');
-  expect(await passport.evaluate((e) => getComputedStyle(e).direction)).toBe('ltr');
-  expect(await passport.evaluate((e) => getComputedStyle(e).textAlign)).toMatch(/^(end|right)$/);
+  for (const label of ['رقم جواز السفر', 'رقم الهاتف', 'البريد الإلكتروني']) {
+    const field = page.getByLabel(label);
+    expect(await field.evaluate((e) => getComputedStyle(e).direction), label).toBe('ltr');
+    expect(await field.evaluate((e) => getComputedStyle(e).textAlign), label).toMatch(/^(end|right)$/);
+  }
   await expect(page.getByLabel('الاسم الكامل')).toHaveAttribute('dir', 'auto');
   const label = await page.locator('label[for="passport"]').boundingBox();
-  const input = await passport.boundingBox();
-  expect(Math.abs(label!.x + label!.width - (input!.x + input!.width))).toBeLessThan(2); // labels hug the inline-end edge
+  const input = await page.getByLabel('رقم جواز السفر').boundingBox();
+  expect(Math.abs(label!.x + label!.width - (input!.x + input!.width))).toBeLessThan(2);
 });
 
 test('typed text is never set in the KFUPM display font (it has no glyphs for most names)', async ({ page }) => {
   await open(page);
-  for (const label of ['Passport number', 'Phone number', 'Full name']) {
+  for (const label of ['Passport number', 'Phone number', 'Email address', 'Full name']) {
     const family = await page.getByLabel(label).evaluate((e) => getComputedStyle(e).fontFamily);
     expect(family, label).not.toMatch(/KFUPM/);
     expect(family, label).toMatch(/^"?IBM Plex Sans Arabic/);

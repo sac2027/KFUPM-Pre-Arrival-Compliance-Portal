@@ -43,6 +43,7 @@ describe('Masthead', () => {
     expect(logo).toHaveAttribute('width');
     expect(logo).toHaveAttribute('height');
     expect(screen.getByRole('button', { name: 'العربية' })).toBeInTheDocument();
+    expect(screen.queryByText(/Dhahran|Onboarding Portal/)).toBeNull(); // the location line is gone
   });
 });
 
@@ -64,11 +65,12 @@ describe('stylesheets', () => {
     }
   });
 
-  it('places the Matrix at the inline-end by moving it, using the generator export unaltered', () => {
+  it('uses the generator export unaltered as the page ground, moved (never mirrored) in RTL', () => {
     const shell = css.find(([n]) => n === 'shell.css')![1];
-    expect(shell).toContain("url('/brand/matrix/matrix-turquoise-green.svg')");
+    expect(shell).toContain("url('/brand/matrix/matrix-beige-sand.svg')");
     expect(shell).toMatch(/background-size:\s*cover/);
-    expect(shell).toMatch(/\[dir=['"]?rtl['"]?\][^{]*matrix[^{]*\{[^}]*background-position/);
+    expect(shell).toMatch(/\[dir=['"]?rtl['"]?\][^{]*page-matrix[^{]*\{[^}]*background-position/);
+    expect(shell).not.toContain('masthead__matrix'); // the Matrix left the heading
   });
 
   it('has no gradients and no resting shadows (house style)', () => {

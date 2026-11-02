@@ -1,15 +1,15 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TERM_IDS } from '../../src/lib/termsSchema';
-import { createMockAuthService } from '../../src/services/authService';
-import { createMockDbService } from '../../src/services/dbService';
+import { createMockAuthService } from '../../src/services/authService.mock';
+import { createMockDbService } from '../../src/services/dbService.mock';
 import { ServiceError } from '../../src/services/types';
 import type { Credentials, Session, SubmissionPayload } from '../../src/services/types';
 
-const creds: Credentials = { passportNumber: 'A1234567', phoneNumber: '+966551234567', fullName: 'محمد عبدالله' };
+const creds: Credentials = { passportNumber: 'A1234567', phoneNumber: '+966551234567', email: 'm@example.com', fullName: 'محمد عبدالله' };
 const PNG = 'data:image/png;base64,iVBORw0KGgo=';
 
 const payload = (over: Partial<SubmissionPayload> = {}): SubmissionPayload => ({
-  session: { sessionId: 's-1', student: creds, issuedAt: '2026-11-01T10:00:00.000Z' } satisfies Session,
+  session: { sessionId: 's-1', student: { fullName: creds.fullName, email: 'm•••@example.com', passportLast4: '4567' }, issuedAt: '2026-11-01T10:00:00.000Z', expiresAt: '2026-11-01T10:30:00.000Z', token: 't' } satisfies Session,
   locale: 'ar',
   documentRef: 'KFUPM-INTL-PACF',
   acceptedTermIds: [...TERM_IDS],
@@ -24,16 +24,17 @@ afterEach(() => {
 });
 
 describe('authService (mock)', () => {
-  it('returns a session carrying the student and an ISO issue time', async () => {
+  it('returns a session carrying the verified student (masked), an ISO issue time and a token', async () => {
     const s = await createMockAuthService({ latencyMs: 0 }).login(creds);
     expect(s.sessionId.length).toBeGreaterThan(8);
-    expect(s.student).toEqual(creds);
+    expect(s.student).toEqual({ fullName: 'محمد عبدالله', email: 'm•••@example.com', passportLast4: '4567' });
     expect(new Date(s.issuedAt).toISOString()).toBe(s.issuedAt);
+    expect(s.token).toBeTruthy();
   });
 
   it('rejects with invalid_credentials when any field is blank', async () => {
     const auth = createMockAuthService({ latencyMs: 0 });
-    for (const bad of [{ ...creds, passportNumber: ' ' }, { ...creds, phoneNumber: '' }, { ...creds, fullName: '' }]) {
+    for (const bad of [{ ...creds, passportNumber: ' ' }, { ...creds, phoneNumber: '' }, { ...creds, email: '' }, { ...creds, fullName: '' }]) {
       await expect(auth.login(bad)).rejects.toMatchObject({ code: 'invalid_credentials' });
     }
   });
@@ -65,7 +66,7 @@ describe('dbService (mock)', () => {
     const r = await db().submitCompliance(payload());
     expect(r.referenceNumber).toMatch(/^PACF-\d{4}-[A-Z0-9]{6}$/);
     expect(new Date(r.receivedAt).toISOString()).toBe(r.receivedAt);
-    expect(Object.keys(r).sort()).toEqual(['receivedAt', 'referenceNumber']);
+    expect(Object.keys(r).sort()).toEqual(['id', 'receivedAt', 'referenceNumber']);
   });
 
   it('issues different reference numbers each time', async () => {

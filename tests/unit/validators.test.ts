@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 import { describe, expect, it } from 'vitest';
 import { normaliseDigits, stripInvisible } from '../../src/lib/normalise';
-import { loginSchema, nameSchema, passportSchema, phoneSchema } from '../../src/lib/validators';
+import { emailSchema, loginSchema, nameSchema, passportSchema, phoneSchema } from '../../src/lib/validators';
 
 const ok = (schema: v.GenericSchema, input: unknown) => v.safeParse(schema, input).success;
 const out = (schema: v.GenericSchema, input: unknown) => (v.parse(schema, input) as string);
@@ -32,13 +32,25 @@ describe('passport', () => {
 });
 
 describe('phone', () => {
-  it.each(['+966 55 123 4567', '+44 7700 900123', '0551234567', '(055) 123-4567', '+٩٦٦ ٥٥ ١٢٣ ٤٥٦٧'])('accepts %s', (p) => expect(ok(phoneSchema, p)).toBe(true));
+  it.each(['+966 55 123 4567', '+44 7700 900123', '00966 55 123 4567', '+44 (0) 7700 900123', '+٩٦٦ ٥٥ ١٢٣ ٤٥٦٧'])('accepts %s', (p) => expect(ok(phoneSchema, p)).toBe(true));
+  it('explains the missing country code separately from other mistakes', () => {
+    expect(msg(phoneSchema, '0551234567')).toBe('error.phone.countryCode');
+    expect(msg(phoneSchema, '(055) 123-4567')).toBe('error.phone.countryCode');
+  });
   it('normalises to an optional + and ASCII digits only', () => {
     expect(out(phoneSchema, '+966 55 123 4567')).toBe('+966551234567');
     expect(out(phoneSchema, '+٩٦٦ ٥٥ ١٢٣ ٤٥٦٧')).toBe('+966551234567');
+    expect(out(phoneSchema, '00966 55 123 4567')).toBe('+966551234567');
   });
-  it.each(['abc', '123', '+1234567890123456', '55+1234567', '++96655123'])('rejects %s', (p) => expect(msg(phoneSchema, p)).toBe('error.phone'));
+  it.each(['abc', '+1234567890123456', '55+1234567', '++96655123', '+1234567'])('rejects %s', (p) => expect(msg(phoneSchema, p)).toBe('error.phone'));
   it('reports empty as required', () => expect(msg(phoneSchema, '')).toBe('error.required'));
+});
+
+describe('email', () => {
+  it.each(['Mai@Example.com', ' s202368990@kfupm.edu.sa ', 'first.last+tag@sub.example.co.uk'])('accepts %s', (e) => expect(ok(emailSchema, e)).toBe(true));
+  it('lower-cases and trims', () => expect(out(emailSchema, ' Mai@Example.COM ')).toBe('mai@example.com'));
+  it.each(['mai', 'mai@', '@example.com', 'mai example@x.com', 'a@b'])('rejects %s', (e) => expect(msg(emailSchema, e)).toBe('error.email'));
+  it('reports empty as required', () => expect(msg(emailSchema, '')).toBe('error.required'));
 });
 
 describe('name', () => {
@@ -81,9 +93,10 @@ describe('names that real students have (break-ui)', () => {
 
 describe('loginSchema', () => {
   it('returns normalised values for all three fields', () => {
-    expect(v.parse(loginSchema, { passportNumber: 'a1234567', phoneNumber: '+966 55 123 4567', fullName: ' محمد  عبدالله ' })).toEqual({
+    expect(v.parse(loginSchema, { passportNumber: 'a1234567', phoneNumber: '+966 55 123 4567', email: ' M@Example.com', fullName: ' محمد  عبدالله ' })).toEqual({
       passportNumber: 'A1234567',
       phoneNumber: '+966551234567',
+      email: 'm@example.com',
       fullName: 'محمد عبدالله',
     });
   });

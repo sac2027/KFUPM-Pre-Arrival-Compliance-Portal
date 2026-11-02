@@ -77,7 +77,41 @@
   margin: 0;
 }
 
+.confirm {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--beige);
+}
+
+.confirm p {
+  margin: 0;
+  font-weight: 500;
+}
+
+.confirm__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.form__notice {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  background: var(--beige);
+  font-weight: 500;
+}
+
+.icon {
+  flex: none;
+}
+
 .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
   justify-self: start;
   min-inline-size: min(11rem, 100%); /* "Sign in" and "Signing in…" occupy the same width; never wider than the screen */
   min-block-size: 3rem;

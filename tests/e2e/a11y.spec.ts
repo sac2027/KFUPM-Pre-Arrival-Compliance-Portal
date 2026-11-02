@@ -1,11 +1,12 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { confirmAllTerms, drawSignature, fillLogin, L, makePng } from './helpers';
+import { confirmAllTerms, drawSignature, fillLogin, L, makePng, settleReceipt } from './helpers';
 import type { Locale } from './helpers';
+import { byLocale, STUDENTS } from './students';
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'];
-const GOOD = (l: Locale) => ({ passport: 'N1234567', phone: '+966551234567', name: l === 'en' ? 'Mai Nguyễn' : 'محمد عبدالله' });
+const GOOD = (l: Locale) => byLocale(l);
 
 async function scan(page: Page, where: string) {
   const r = await new AxeBuilder({ page }).withTags(TAGS).analyze();
@@ -21,8 +22,8 @@ for (const locale of ['en', 'ar'] as const) {
     await page.evaluate(() => document.fonts.ready);
     await scan(page, 'login');
 
-    await page.getByRole('button', { name: s.signin }).click(); // empty submit: three inline errors
-    await expect(page.locator('.field__error')).toHaveCount(3);
+    await page.getByRole('button', { name: s.signin }).click(); // empty submit: four inline errors
+    await expect(page.locator('.field__error')).toHaveCount(4);
     await scan(page, 'login with errors');
 
     await fillLogin(page, locale, GOOD(locale));
@@ -43,6 +44,7 @@ for (const locale of ['en', 'ar'] as const) {
     await drawSignature(page);
     await page.getByRole('button', { name: s.submit }).click();
     await expect(page.getByRole('heading', { level: 2, name: s.heading })).toBeFocused({ timeout: 8000 });
+    await settleReceipt(page);
     await scan(page, 'receipt');
     await page.getByRole('button', { name: locale === 'en' ? 'Finish and clear my details' : 'إنهاء ومسح بياناتي' }).click();
     await scan(page, 'receipt (confirming)');
@@ -73,15 +75,18 @@ test('keyboard only: the whole flow can be completed, in a sensible order, with 
     stops.push(f.what);
   };
 
-  // Login: skip link, language, then the three fields and the button, in reading order.
-  for (let i = 0; i < 6; i++) await tab();
-  expect(stops.map((s) => s.split(' ').slice(1).join(' '))).toEqual(['Skip to main content', 'العربية', '', '', '', 'Sign in']);
+  // Login: skip link, language, then the four fields and the button, in reading order.
+  for (let i = 0; i < 7; i++) await tab();
+  expect(stops.map((s) => s.split(' ').slice(1).join(' '))).toEqual(['Skip to main content', 'العربية', '', '', '', '', 'Sign in']);
+  const me = STUDENTS.mai;
   await page.keyboard.press('Shift+Tab'); // Full name
-  await page.keyboard.type('Mai Nguyễn');
-  await page.keyboard.press('Shift+Tab');
-  await page.keyboard.type('+966551234567');
-  await page.keyboard.press('Shift+Tab');
-  await page.keyboard.type('N1234567');
+  await page.keyboard.type(me.name);
+  await page.keyboard.press('Shift+Tab'); // Email
+  await page.keyboard.type(me.email);
+  await page.keyboard.press('Shift+Tab'); // Phone
+  await page.keyboard.type(me.phone);
+  await page.keyboard.press('Shift+Tab'); // Passport
+  await page.keyboard.type(me.passport);
   await page.keyboard.press('Enter'); // submit from inside a field
   await expect(page.locator('#terms-heading')).toBeFocused();
   expect((await focusIsVisible(page)).ok).toBe(true); // the heading we land on shows where we are
@@ -150,7 +155,7 @@ test.describe('other guideline checks', () => {
         void d.dismiss();
       });
       await page.goto('/');
-      await fillLogin(page, 'en', stopAt === 'login' ? { passport: '', phone: '', name: '' } : GOOD('en'));
+      await fillLogin(page, 'en', stopAt === 'login' ? { passport: '', phone: '', email: '', name: '' } : GOOD('en'));
       if (stopAt === 'terms') await page.locator('.term').first().waitFor();
       await page.locator('body').click({ position: { x: 5, y: 5 } }); // a user gesture, which browsers require before they will ask
       await page.close({ runBeforeUnload: true });
@@ -173,7 +178,7 @@ test.describe('other guideline checks', () => {
     await page.goto('/');
     await fillLogin(page, 'en', GOOD('en'));
     await expect(page.locator('.declarant dd').first()).toHaveAttribute('translate', 'no');
-    await expect(page.locator('.doc__meta dd').first()).toHaveAttribute('translate', 'no');
+    await expect(page.locator('.declarant dd').first()).toHaveAttribute('dir', 'auto');
   });
 
   test('the viewport allows pinch-zoom and has no cover-without-insets', async ({ page }) => {

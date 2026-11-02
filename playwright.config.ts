@@ -6,7 +6,7 @@ import { defineConfig } from '@playwright/test';
 const SANDBOX_CHROMIUM = '/opt/pw-browsers/chromium';
 const executablePath = process.env.PW_CHROMIUM_PATH ?? (existsSync(SANDBOX_CHROMIUM) ? SANDBOX_CHROMIUM : undefined);
 const launchOptions = { ...(executablePath ? { executablePath } : {}), args: ['--no-sandbox'] };
-const PROD = 'http://127.0.0.1:4173'; // the production build: what students get
+const PROD = 'http://127.0.0.1:8788'; // the production build served by the local Pages dev server, with the API and local D1/R2
 const DEV = 'http://127.0.0.1:5174'; // the dev server: has the worst-case toggle (break-ui)
 
 const sizes = [
@@ -17,15 +17,17 @@ const sizes = [
 
 export default defineConfig({
   testDir: './tests/e2e',
+  globalSetup: './tests/e2e/global-setup.ts',
   fullyParallel: true,
   reporter: [['list']],
   use: { launchOptions, trace: 'retain-on-failure' },
   webServer: [
     {
-      command: 'npm run build && npm run preview -- --host 127.0.0.1 --port 4173 --strictPort',
-      url: PROD,
+      command: 'npm run serve:test',
+      url: `${PROD}/api/health`,
       reuseExistingServer: true,
-      timeout: 120_000,
+      timeout: 180_000,
+      env: { WRANGLER_SEND_METRICS: 'false', NO_PROXY: '*', no_proxy: '*' },
     },
     {
       command: 'npm run dev -- --host 127.0.0.1 --port 5174 --strictPort',

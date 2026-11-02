@@ -7,3 +7,6 @@ playwright-report
 *.log
 .DS_Store
 .taste-skill
+.dev.vars
+.wrangler
+export

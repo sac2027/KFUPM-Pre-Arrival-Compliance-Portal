@@ -1,7 +1,8 @@
 /** The responsive matrix: every step at every supported width, in both languages. Viewport-independent, so one project runs it. */
 import { expect, test } from '@playwright/test';
-import { clipped, confirmAllTerms, drawSignature, fillLogin, L, overflow } from './helpers';
+import { clipped, confirmAllTerms, drawSignature, fillLogin, L, overflow, settleReceipt } from './helpers';
 import type { Locale } from './helpers';
+import { byLocale } from './students';
 
 const WIDTHS = [320, 360, 375, 768, 1024, 1280, 1920] as const;
 
@@ -30,7 +31,7 @@ for (const locale of ['en', 'ar'] as const satisfies readonly Locale[]) {
       const logo = (await page.locator('.masthead__logo').boundingBox())!;
       expect(Math.abs(logo.width / logo.height - 2657 / 1083)).toBeLessThan(0.03); // lockup never distorted
 
-      await fillLogin(page, locale, { passport: 'N1234567', phone: '+966551234567', name: locale === 'en' ? 'Mai Nguyễn' : 'محمد عبدالله' });
+      await fillLogin(page, locale, byLocale(locale));
       await expect(page.locator('#terms-heading')).toBeFocused();
       await fits('terms');
       await confirmAllTerms(page, locale);
@@ -38,6 +39,7 @@ for (const locale of ['en', 'ar'] as const satisfies readonly Locale[]) {
       await drawSignature(page);
       await page.getByRole('button', { name: s.submit }).click();
       await expect(page.getByRole('heading', { level: 2, name: s.heading })).toBeFocused({ timeout: 8000 });
+      await settleReceipt(page);
       await fits('receipt');
     });
   }

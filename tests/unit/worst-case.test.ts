@@ -5,7 +5,6 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import raw from '../../src/data/compliance-terms.json';
 import worst from '../../src/dev/worst-case-terms.json';
-import { WORST_FULL_NAME, WORST_REFERENCE } from '../../src/dev/worstCase';
 import { parseTerms, termText, TERM_IDS } from '../../src/lib/termsSchema';
 
 describe('worst-case fixture', () => {
@@ -20,8 +19,6 @@ describe('worst-case fixture', () => {
     expect(stress.document.title.en.length).toBeGreaterThan(demo.document.title.en.length * 2);
     expect(termText(stress.terms[0]!, 'ar', stress.links).length).toBeGreaterThan(termText(demo.terms[0]!, 'ar', demo.links).length * 3);
     expect(termText(stress.terms[3]!, 'en', stress.links).length).toBeLessThan(40); // "one item 10x smaller"
-    expect(WORST_FULL_NAME.length).toBeLessThanOrEqual(255); // a plausible SSO column limit
-    expect(WORST_REFERENCE).toMatch(/^[0-9a-f]{64}$/);
   });
 
   it('includes unbroken strings, literal markup and a very long URL (the failures that ship)', () => {
@@ -43,7 +40,7 @@ describe('production bundle (dev tooling must never ship)', () => {
       stdio: 'pipe',
     });
     const js = files(outDir).filter((f) => /\.(js|html|css|json)$/.test(f)).map((f) => readFileSync(f, 'utf8')).join('\n');
-    for (const needle of ['WORSTCASE-FIXTURE-MARKER', 'Worst case', 'data-dev-chrome', 'KFUPMDSACODEOFCONDUCT', WORST_REFERENCE, WORST_FULL_NAME.slice(0, 30), "get('data')", "get('fail')", 'simulated outage']) {
+    for (const needle of ['WORSTCASE-FIXTURE-MARKER', 'Worst case', 'data-dev-chrome', 'KFUPMDSACODEOFCONDUCT', "get('data')", "get('fail')", 'simulated outage']) {
       expect(js, needle).not.toContain(needle);
     }
     expect(js.length).toBeGreaterThan(50_000); // sanity: we really did read the bundle

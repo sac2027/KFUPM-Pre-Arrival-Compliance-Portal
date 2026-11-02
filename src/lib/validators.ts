@@ -15,11 +15,24 @@ export const passportSchema = v.pipe(
   v.regex(/^[A-Z0-9]{5,20}$/, 'error.passport'),
 );
 
+/** International students: the country code is required. `00` is accepted and turned into `+`. */
 export const phoneSchema = v.pipe(
   v.string(),
-  v.transform((s) => normaliseDigits(s).replace(/[\s().-]/g, '')),
+  v.transform((s) => {
+    const t = normaliseDigits(s).replace(/\(0\)/g, '').replace(/[\s().-]/g, '');
+    return t.startsWith('00') ? `+${t.slice(2)}` : t;
+  }),
   v.nonEmpty('error.required'),
-  v.regex(/^\+?\d{7,15}$/, 'error.phone'),
+  v.check((s) => s.startsWith('+') || !/^\d+$/.test(s), 'error.phone.countryCode'),
+  v.regex(/^\+\d{8,15}$/, 'error.phone'),
+);
+
+export const emailSchema = v.pipe(
+  v.string(),
+  v.transform((s) => stripInvisible(s).trim().toLowerCase()),
+  v.nonEmpty('error.required'),
+  v.maxLength(254, 'error.email'),
+  v.regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'error.email'),
 );
 
 /**
@@ -41,6 +54,7 @@ export const nameSchema = v.pipe(
 export const loginSchema = v.object({
   passportNumber: passportSchema,
   phoneNumber: phoneSchema,
+  email: emailSchema,
   fullName: nameSchema,
 });
 
