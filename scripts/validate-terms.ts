@@ -17,13 +17,11 @@ const warnings: string[] = [];
 for (const [id, l] of Object.entries(terms.links)) {
   if (l.status !== 'verified') warnings.push(`link "${id}" is ${l.status}: ${l.url}`);
 }
-for (const loc of ['en', 'ar'] as const) {
-  if (terms.meta.reviewStatus[loc] !== 'approved') warnings.push(`${loc.toUpperCase()} text is "${terms.meta.reviewStatus[loc]}"`);
-}
+if (terms.meta.reviewStatus.en !== 'approved') warnings.push(`EN text is "${terms.meta.reviewStatus.en}"`);
 const MAX_TITLE = 110;
 const MAX_BODY = 1200;
 for (const t of terms.terms) {
-  for (const loc of ['en', 'ar'] as const) {
+  for (const loc of ['en'] as const) {
     const body = t.body[loc].map((s) => ('text' in s ? s.text : 'strong' in s ? s.strong : (terms.links[s.linkId]?.label[loc] ?? ''))).join('');
     if (t.title[loc].length > MAX_TITLE) warnings.push(`term "${t.id}" ${loc} title is ${t.title[loc].length} characters (over ${MAX_TITLE}): it will wrap to many lines on phones`);
     if (body.length > MAX_BODY) warnings.push(`term "${t.id}" ${loc} text is ${body.length} characters (over ${MAX_BODY}): the printed declaration may run past one page`);

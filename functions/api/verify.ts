@@ -12,13 +12,13 @@ const IP_LIMIT = 100; // failures per IP per window; successes never count (shar
 const NO_MATCH = { code: 'no_match', message: 'These details do not match our records. Check each one, typing your name exactly as it appears in your passport.' };
 
 /**
- * POST /api/verify {passportNumber, phoneNumber, fullName, email}
+ * POST /api/verify {fullName, email, passportNumber}  (the nationality the student picks is recorded later, never checked)
  * One generic failure for every kind of mismatch, so the response never reveals which field was wrong or whether
  * the passport exists. Failed attempts are throttled per passport and per (hashed) IP; successes are not counted.
  */
 export const onRequestPost = handle<Env>(async ({ request, env }) => {
   const input = parseVerifyBody(await readJson(request));
-  if (!input) return error(400, 'bad_request', 'All four fields are required: passport number, phone number with country code, full name and email.');
+  if (!input) return error(400, 'bad_request', 'Full name, email and passport number are required.');
 
   const ip = request.headers.get('cf-connecting-ip') ?? '0.0.0.0';
   const ipKey = `ip:${await hashIp(ip, env.SESSION_SECRET)}`;
@@ -29,7 +29,7 @@ export const onRequestPost = handle<Env>(async ({ request, env }) => {
     return error(429, 'too_many_attempts', 'Too many attempts. Please wait before trying again.', { 'retry-after': String(wait) });
   }
 
-  const row = await env.ROSTER.prepare('SELECT passport_number, full_name, phone_e164, email, status FROM students WHERE passport_number = ?').bind(input.passport).first<RosterRow>();
+  const row = await env.ROSTER.prepare('SELECT passport_number, full_name, email, status FROM students WHERE passport_number = ?').bind(input.passport).first<RosterRow>();
   if (!matchStudent(input, row)) {
     await Promise.all([bump(env.RECORDS, ipKey, IP_LIMIT, WINDOW_SECONDS), bump(env.RECORDS, passportKey, PASSPORT_LIMIT, WINDOW_SECONDS)]);
     return json(401, NO_MATCH);

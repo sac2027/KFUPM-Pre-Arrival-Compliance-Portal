@@ -6,12 +6,11 @@ import { parseSubmissionBody } from '../../lib/validate';
 interface RosterRow {
   full_name: string;
   passport_number: string;
-  phone_e164: string;
   email: string;
 }
 
 /**
- * POST /api/submissions  (Bearer session token)  {locale, acceptedTermIds, signature:{method,dataUrl}}
+ * POST /api/submissions  (Bearer session token)  {locale, nationality, acceptedTermIds, signature:{method,dataUrl}}
  * Records the declaration for the verified student. Who they are comes from the roster via the session,
  * never from the body. One submission per session. → 201 {id, referenceNumber, submittedAt}
  */
@@ -21,9 +20,9 @@ export const onRequestPost = handle<Env>(async ({ request, env }) => {
 
   const parsed = parseSubmissionBody(await readJson(request, 3 * 1024 * 1024));
   if (!parsed.ok) return error(400, 'invalid_submission', parsed.message);
-  const { locale, acceptedTermIds, signature } = parsed.value;
+  const { nationality, acceptedTermIds, signature } = parsed.value;
 
-  const student = await env.ROSTER.prepare('SELECT full_name, passport_number, phone_e164, email FROM students WHERE passport_number = ?').bind(session.passport_number).first<RosterRow>();
+  const student = await env.ROSTER.prepare('SELECT full_name, passport_number, email FROM students WHERE passport_number = ?').bind(session.passport_number).first<RosterRow>();
   if (!student) return error(401, 'session_expired', 'Your session has expired. Please sign in again.');
 
   const id = crypto.randomUUID();
@@ -37,8 +36,8 @@ export const onRequestPost = handle<Env>(async ({ request, env }) => {
     try {
       await env.RECORDS.batch([
         env.RECORDS.prepare(
-          'INSERT INTO submissions (id, reference_number, full_name, passport_last4, email, phone_e164, locale, accepted_term_ids, signature_method, signature_key, submitted_at, user_agent) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        ).bind(id, referenceNumber, student.full_name, student.passport_number.slice(-4), student.email, student.phone_e164, locale, JSON.stringify(acceptedTermIds), signature.method, signatureKey, submittedAt, (request.headers.get('user-agent') ?? '').slice(0, 300)),
+          'INSERT INTO submissions (id, reference_number, full_name, passport_last4, email, nationality, locale, accepted_term_ids, signature_method, signature_key, submitted_at, user_agent) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        ).bind(id, referenceNumber, student.full_name, student.passport_number.slice(-4), student.email, nationality, 'en', JSON.stringify(acceptedTermIds), signature.method, signatureKey, submittedAt, (request.headers.get('user-agent') ?? '').slice(0, 300)),
         env.RECORDS.prepare('UPDATE sessions SET used_at = ?, submission_id = ? WHERE sid = ? AND used_at IS NULL').bind(submittedAt, id, session.sid),
       ]);
       break;

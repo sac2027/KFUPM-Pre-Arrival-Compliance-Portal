@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SignatureStep } from '../../src/features/signature/SignatureStep';
 import { I18nProvider } from '../../src/i18n/I18nProvider';
-import type { Locale } from '../../src/i18n/I18nProvider';
 import { ServiceError } from '../../src/services/types';
 
 /** jsdom has no canvas, so the pad is faked; the real one is exercised in the Playwright suite. */
@@ -47,12 +46,12 @@ const stroke = (length: number) => {
 const PNG_HEAD = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0];
 const png = () => new File([new Uint8Array(PNG_HEAD)], 'sig.png', { type: 'image/png' });
 
-function setup(opts: { locale?: Locale; onSubmit?: (s: unknown) => Promise<void> } = {}) {
+function setup(opts: { onSubmit?: (s: unknown) => Promise<void> } = {}) {
   const onBack = vi.fn();
   const onSubmit = vi.fn(opts.onSubmit ?? (async () => {}));
   const processImage = vi.fn(async () => 'data:image/png;base64,UPLOADED');
   render(
-    <I18nProvider initialLocale={opts.locale ?? 'en'}>
+    <I18nProvider>
       <SignatureStep onBack={onBack} onSubmit={onSubmit} processImage={processImage} />
     </I18nProvider>,
   );
@@ -179,13 +178,5 @@ describe('SignatureStep', () => {
     const { user, onBack } = setup();
     await user.click(screen.getByRole('button', { name: 'Back to terms' }));
     expect(onBack).toHaveBeenCalledTimes(1);
-  });
-
-  it('renders in Arabic with RTL tabs', () => {
-    setup({ locale: 'ar' });
-    expect(screen.getByRole('tab', { name: 'رسم' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'رفع صورة' })).toBeInTheDocument();
-    expect(screen.getByRole('tablist')).toHaveAttribute('aria-orientation', 'horizontal');
-    expect(document.querySelector('[dir="rtl"]')).not.toBeNull();
   });
 });

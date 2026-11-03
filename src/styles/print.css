@@ -1,97 +1,138 @@
-/* The signed declaration exists only for print / save-as-PDF, and for the off-screen capture that makes the PDF file. */
-.print-sheet {
+/*
+ * The signed declaration. Hidden on screen; shown (1) by the browser's Print and (2) in the off-screen stage that
+ * makes the PDF file (src/lib/pdf.ts). Both use these rules, in physical units, so the two are the same A4 page:
+ * 182 mm wide (210 mm less 14 mm margins) and, for the standard wording, no taller than 273 mm (297 mm less 12 mm margins).
+ */
+.print-sheet:not(.print-sheet--capture) {
   display: none;
 }
 
-.print-sheet--capture {
-  display: block;
-  padding: 0;
+.print-sheet {
+  box-sizing: border-box;
   color: #000;
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 10pt;
+  line-height: 1.4;
   background: #fff;
 }
 
-.print-sheet--capture p {
-  margin: 0 0 10px;
+.print-sheet p {
+  margin: 0 0 1.6mm;
 }
 
-.print-sheet--capture .print-sheet__head {
+.print-sheet__head {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.print-sheet--capture .print-sheet__logo {
-  inline-size: 190px;
+.print-sheet__logo {
+  inline-size: 44mm;
   block-size: auto;
 }
 
-.print-sheet--capture .print-sheet__seal {
-  inline-size: 80px;
+.print-sheet__seal {
+  inline-size: 17mm;
   block-size: auto;
 }
 
-.print-sheet--capture .print-sheet__band {
-  block-size: 36px;
-  margin-block: 4px 16px;
+/* The generator export, once, as the page's edge. */
+.print-sheet__band {
+  block-size: 6mm;
+  margin-block: 1mm 3.5mm;
   background-color: var(--beige);
   background-image: url('/brand/matrix/matrix-beige-sand.svg');
   background-size: cover;
   background-position: right bottom;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
 
-[dir='rtl'] .print-sheet--capture .print-sheet__band {
-  background-position: left bottom;
-}
-
-.print-sheet--capture .print-sheet__title {
-  margin-block-end: 8px;
-  font-size: 21px;
+.print-sheet__title {
+  margin: 0 0 1.5mm;
+  font-size: 15pt;
   line-height: 1.2;
 }
 
-.print-sheet--capture .print-sheet__meta {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  column-gap: 16px;
-  row-gap: 4px;
-  margin: 0 0 14px;
+.print-sheet__ids {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 7mm;
+  margin: 0 0 3mm;
   font-variant-numeric: tabular-nums;
 }
 
-.print-sheet--capture .print-sheet__meta dt {
+.print-sheet__ids div {
+  display: flex;
+  gap: 2mm;
+}
+
+.print-sheet dt {
   color: var(--turquoise);
   font-weight: 500;
 }
 
-.print-sheet--capture .print-sheet__meta dd {
+.print-sheet dd {
   margin: 0;
 }
 
-.print-sheet--capture .print-sheet__terms {
-  margin: 12px 0;
+.print-sheet__terms {
+  margin: 2.5mm 0;
   padding: 0;
   list-style: none;
 }
 
-.print-sheet--capture .print-sheet__terms li {
-  margin-block-end: 12px;
+.print-sheet__terms li {
+  break-inside: avoid;
+  margin-block-end: 2.2mm;
 }
 
-.print-sheet--capture .print-sheet__terms h3 {
-  margin: 0 0 4px;
-  font-size: 14px;
+.print-sheet__terms h3 {
+  margin: 0 0 0.6mm;
+  font-size: 11pt;
 }
 
-.print-sheet--capture .print-sheet__sign {
-  margin-block-start: 20px;
+.print-sheet__sign {
+  break-inside: avoid; /* the closing statement and the signature never part */
+  margin-block-start: 3mm;
 }
 
-.print-sheet--capture .print-sheet__signature {
-  max-block-size: 90px;
-  max-inline-size: 260px;
-  margin-block-end: 12px;
+.print-sheet__signed {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 6mm;
+  align-items: end;
+}
+
+.print-sheet__ink {
+  display: grid;
+  gap: 1mm;
+}
+
+.print-sheet__signature {
+  inline-size: auto;
+  max-block-size: 20mm;
+  max-inline-size: 100%;
+  justify-self: start;
+  object-fit: contain;
+}
+
+.print-sheet__line {
+  border-block-end: 0.3mm solid #000;
+}
+
+.print-sheet__meta {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 3mm;
+  row-gap: 0.6mm;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Capture stage: the sheet laid out at exactly the printable width. */
+.print-sheet--capture {
+  display: block;
+  inline-size: 182mm;
 }
 
 @media print {
@@ -107,6 +148,7 @@
 
   .skip-link,
   .masthead,
+  .page-matrix,
   .page__footer,
   .stepper,
   .doc__head,
@@ -125,98 +167,12 @@
     background: none;
   }
 
-  .print-sheet {
+  .doc__body {
+    max-inline-size: none;
+  }
+
+  .print-sheet:not(.print-sheet--capture) {
     display: block;
-    color: #000;
-    font-size: 10pt;
-    line-height: 1.45;
-  }
-
-  .print-sheet p {
-    margin: 0 0 2.5mm;
-  }
-
-  .print-sheet__head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .print-sheet__logo {
-    inline-size: 48mm;
-    block-size: auto;
-  }
-
-  .print-sheet__seal {
-    inline-size: 20mm;
-    block-size: auto;
-  }
-
-  /* The generator export, once, as the page's edge. */
-  .print-sheet__band {
-    block-size: 9mm;
-    margin-block: 1mm 4mm;
-    background-color: var(--beige);
-    background-image: url('/brand/matrix/matrix-beige-sand.svg');
-    background-size: cover;
-    background-position: right bottom;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-
-  [dir='rtl'] .print-sheet__band {
-    background-position: left bottom;
-  }
-
-  .print-sheet__title {
-    margin-block-end: 2mm;
-    font-size: 16pt;
-    line-height: 1.2;
-  }
-
-  .print-sheet__meta {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    column-gap: 4mm;
-    row-gap: 1mm;
-    margin: 0 0 3.5mm;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .print-sheet__meta dt {
-    color: var(--turquoise);
-    font-weight: 500;
-  }
-
-  .print-sheet__meta dd {
-    margin: 0;
-  }
-
-  .print-sheet__terms {
-    margin: 3mm 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .print-sheet__terms li {
-    break-inside: avoid;
-    margin-block-end: 3mm;
-  }
-
-  .print-sheet__terms h3 {
-    margin: 0 0 1mm;
-    font-size: 11pt;
-  }
-
-  .print-sheet__sign {
-    break-inside: avoid; /* the closing statement and the signature never part */
-    margin-block-start: 5mm;
-  }
-
-  .print-sheet__signature {
-    max-block-size: 22mm;
-    max-inline-size: 64mm;
-    margin-block-end: 3mm;
   }
 
   .step {

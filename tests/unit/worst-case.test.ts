@@ -11,13 +11,13 @@ describe('worst-case fixture', () => {
   const demo = parseTerms(raw);
   const stress = parseTerms(worst); // it must be valid content, or it proves nothing
 
-  it('is valid, complete content in both languages', () => {
+  it('is valid, complete content', () => {
     expect(stress.terms.map((t) => t.id)).toEqual([...TERM_IDS]);
   });
 
   it('is much longer than the demo where staff are free to write, and shorter where they can be terse', () => {
     expect(stress.document.title.en.length).toBeGreaterThan(demo.document.title.en.length * 2);
-    expect(termText(stress.terms[0]!, 'ar', stress.links).length).toBeGreaterThan(termText(demo.terms[0]!, 'ar', demo.links).length * 3);
+    expect(termText(stress.terms[0]!, 'en', stress.links).length).toBeGreaterThan(termText(demo.terms[0]!, 'en', demo.links).length * 3);
     expect(termText(stress.terms[3]!, 'en', stress.links).length).toBeLessThan(40); // "one item 10x smaller"
   });
 

@@ -1,14 +1,11 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { fillLogin } from './helpers';
-import { byLocale, STUDENTS } from './students';
+import { STUDENTS } from './students';
 
-type Locale = 'en' | 'ar';
-
-async function toTerms(page: Page, locale: Locale = 'en', creds = byLocale(locale)) {
-  await page.addInitScript((l) => localStorage.setItem('pacf.locale', l), locale);
+async function toTerms(page: Page, creds = STUDENTS.mai) {
   await page.goto('/');
-  await fillLogin(page, locale, creds);
+  await fillLogin(page, creds);
   await expect(page.getByRole('heading', { level: 2 })).toBeFocused();
   await page.evaluate(() => document.fonts.ready);
 }
@@ -116,21 +113,21 @@ test('the progress meter stays in view on tall screens, and gets out of the way 
   }
 });
 
-for (const locale of ['en', 'ar'] as const) {
-  test(`worst-case name and long terms fit the viewport (${locale})`, async ({ page }) => {
-    await toTerms(page, locale, STUDENTS.longName); // a 190-character roster name
+{
+  test('worst-case name and long terms fit the viewport', async ({ page }) => {
+    await toTerms(page, STUDENTS.longName); // a 190-character roster name
     expect(await noOverflow(page)).toEqual({ overflow: 0, escapes: [] });
     for (let i = 0; i < 5; i++) await page.locator('.term').nth(i).locator('.term__title label').click();
     expect(await noOverflow(page)).toEqual({ overflow: 0, escapes: [] });
   });
 }
 
-test('RTL: the box sits at the inline-start (right) of each card and the check is not mirrored', async ({ page }) => {
-  await toTerms(page, 'ar');
+test('the box sits at the left of each card and the check is not mirrored', async ({ page }) => {
+  await toTerms(page);
   const card = page.locator('.term').first();
   const box = (await card.locator('.term__box').boundingBox())!;
   const text = (await card.locator('.term__text').boundingBox())!;
-  expect(box.x).toBeGreaterThan(text.x);
+  expect(box.x).toBeLessThan(text.x);
   expect(await card.locator('.term__check').evaluate((e) => getComputedStyle(e).transform)).toBe('none');
 });
 

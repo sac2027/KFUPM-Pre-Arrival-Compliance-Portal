@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ReceiptScreen } from '../../src/features/receipt/ReceiptScreen';
 import { I18nProvider } from '../../src/i18n/I18nProvider';
-import type { Locale } from '../../src/i18n/I18nProvider';
 import { loadTerms } from '../../src/lib/terms';
 import { TERM_IDS } from '../../src/lib/termsSchema';
 import { termText } from '../../src/lib/termsSchema';
@@ -15,13 +14,14 @@ const session: Session = {
   student: { fullName: 'Mai Nguyễn', email: 'm•••@example.com', passportLast4: '4567' },
   issuedAt: '2026-11-01T10:00:00.000Z',
   expiresAt: '2026-11-01T10:30:00.000Z',
+  nationality: 'VN',
   token: 't',
 };
 const receipt = { id: '11111111-1111-4111-8111-111111111111', referenceNumber: 'PACF-2026-K7M2QX', receivedAt: '2026-11-01T10:06:30.000Z' };
 const signature = { method: 'draw' as const, dataUrl: 'data:image/png;base64,SIGNED' };
 
 const pdfBlob = new Blob(['%PDF-1.7 test'], { type: 'application/pdf' });
-function setup(locale: Locale = 'en', opts: { upload?: () => Promise<DocumentStatus>; document?: DocumentStatus } = {}) {
+function setup(opts: { upload?: () => Promise<DocumentStatus>; document?: DocumentStatus } = {}) {
   const onFinish = vi.fn();
   const onDocumentStatus = vi.fn();
   const db: DbService = {
@@ -32,7 +32,7 @@ function setup(locale: Locale = 'en', opts: { upload?: () => Promise<DocumentSta
   };
   const renderPdf = vi.fn(async () => pdfBlob);
   render(
-    <I18nProvider initialLocale={locale}>
+    <I18nProvider>
       <ReceiptScreen
         session={session}
         acceptedTermIds={[...TERM_IDS]}
@@ -68,7 +68,7 @@ describe('ReceiptScreen (on screen)', () => {
   });
 
   it('shows the email status line for each state, with retry only on failure', () => {
-    const { user } = setup('en', { document: { state: 'failed', emailTo: 'm•••@example.com' } });
+    const { user } = setup({ document: { state: 'failed', emailTo: 'm•••@example.com' } });
     expect(screen.getByRole('alert')).toHaveTextContent('could not email your copy to m•••@example.com');
     expect(screen.getByRole('button', { name: 'Send the email again' })).toBeInTheDocument();
     void user;
@@ -76,7 +76,7 @@ describe('ReceiptScreen (on screen)', () => {
 
   it('retries by resending once the document is stored, or by uploading again if it never got there', async () => {
     const upload = vi.fn().mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce({ state: 'sent', emailTo: 'm•••@example.com' });
-    const { onDocumentStatus, db, user } = setup('en', { upload, document: { state: 'failed', emailTo: 'm•••@example.com' } });
+    const { onDocumentStatus, db, user } = setup({ upload, document: { state: 'failed', emailTo: 'm•••@example.com' } });
     await waitFor(() => expect(onDocumentStatus).toHaveBeenCalledWith(expect.objectContaining({ state: 'failed' })));
     await user.click(screen.getByRole('button', { name: 'Send the email again' }));
     await waitFor(() => expect(upload).toHaveBeenCalledTimes(2)); // the upload itself had failed: upload again
@@ -127,12 +127,6 @@ describe('ReceiptScreen (on screen)', () => {
     expect(document.querySelector('.receipt__ref')).toHaveAttribute('translate', 'no');
     expect(document.querySelector('.print-sheet [dir="auto"]')).toHaveAttribute('translate', 'no');
   });
-
-  it('renders in Arabic', () => {
-    setup('ar');
-    expect(screen.getByRole('heading', { level: 2, name: 'تم إرسال الإقرار' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'طباعة' })).toBeInTheDocument();
-  });
 });
 
 describe('printable signed declaration', () => {
@@ -142,11 +136,12 @@ describe('printable signed declaration', () => {
     setup();
     expect(sheet()).not.toBeNull();
     expect(within(sheet()).getByRole('img', { name: 'KFUPM Student Affairs' })).toHaveAttribute('src', '/brand/full-stacked.png');
-    expect(within(sheet()).getByRole('img', { name: /seal|ختم/i })).toHaveAttribute('src', '/brand/seal/seal-legacy.webp');
+    expect(within(sheet()).getByRole('img', { name: /seal/i })).toHaveAttribute('src', '/brand/seal/seal-legacy.webp');
   });
 
-  it.each(['en', 'ar'] as const)('contains the full title, every term in full, the closing statement (%s)', (locale) => {
-    setup(locale);
+  it('contains the full title, every term in full, the closing statement', () => {
+    const locale = 'en';
+    setup();
     const text = sheet().textContent!.replace(/\s+/g, ' ');
     expect(text).toContain(TERMS.document.title[locale]);
     expect(text).toContain(TERMS.document.closing[locale]);
@@ -162,8 +157,8 @@ describe('printable signed declaration', () => {
     expect(text).toContain('Mai Nguyễn');
     expect(text).toContain('••••4567');
     expect(text).not.toContain('N1234567'); // the full passport number is never printed
-    expect(text).not.toContain('+966551234567'); // nor the phone number
+    expect(text).toContain('Vietnam'); // the nationality the student chose
     expect(text).toContain('PACF-2026-K7M2QX');
-    expect(within(sheet()).getByRole('img', { name: /signature|التوقيع/i })).toHaveAttribute('src', signature.dataUrl);
+    expect(within(sheet()).getByRole('img', { name: /signature/i })).toHaveAttribute('src', signature.dataUrl);
   });
 });

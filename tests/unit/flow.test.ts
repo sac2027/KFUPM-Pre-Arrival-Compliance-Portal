@@ -9,6 +9,7 @@ const session: Session = {
   student: { fullName: 'Mai Nguyễn', email: 'm•••@example.com', passportLast4: '4567' },
   issuedAt: '2026-11-01T10:00:00.000Z',
   expiresAt: '2026-11-01T10:30:00.000Z',
+  nationality: 'VN',
   token: 't',
 };
 const all = [...TERM_IDS];

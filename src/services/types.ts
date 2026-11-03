@@ -2,15 +2,17 @@
  * Contracts between the UI and the API (functions/api). The browser clients live in authService.ts and
  * dbService.ts; the mocks (*.mock.ts) exist for component tests.
  */
-import type { Locale, TermId } from '../lib/termsSchema';
+import type { TermId } from '../lib/termsSchema';
 
-export type { Locale, TermId };
+export type { TermId };
 
+/** What the student types. Name, email and passport number are checked against the roster; nationality is recorded, not checked. */
 export interface Credentials {
-  passportNumber: string;
-  phoneNumber: string;
-  email: string;
   fullName: string;
+  email: string;
+  /** ISO 3166-1 alpha-2 code from the dropdown (src/data/countries.ts). */
+  nationality: string;
+  passportNumber: string;
 }
 
 /** What the server tells the browser about the verified student: the roster's name, a masked email, the last four of the passport. */
@@ -26,6 +28,8 @@ export interface Session {
   /** ISO-8601 time the session was issued; the declaration displays this date after sign-in. */
   issuedAt: string;
   expiresAt: string;
+  /** The nationality the student chose at sign-in (ISO code). Kept with the session so it is recorded with the declaration. */
+  nationality: string;
   /** Bearer token for the submission calls. Memory only. */
   token: string;
 }
@@ -45,7 +49,6 @@ export interface Signature {
 
 export interface SubmissionPayload {
   session: Session;
-  locale: Locale;
   documentRef: 'KFUPM-INTL-PACF';
   /** Must be exactly the five mandated ids, in order. The real backend MUST enforce this too. */
   acceptedTermIds: TermId[];

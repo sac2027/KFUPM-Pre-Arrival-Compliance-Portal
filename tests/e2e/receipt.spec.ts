@@ -4,25 +4,13 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { fillLogin, settleReceipt } from './helpers';
-import { byLocale, STUDENTS } from './students';
+import { fillLogin, L, settleReceipt, signatureInkAboveLine } from './helpers';
+import { STUDENTS } from './students';
 
-type Locale = 'en' | 'ar';
-const L = (l: Locale) => ({
-  passport: l === 'en' ? 'Passport number' : 'رقم جواز السفر',
-  phone: l === 'en' ? 'Phone number' : 'رقم الهاتف',
-  name: l === 'en' ? 'Full name' : 'الاسم الكامل',
-  signin: l === 'en' ? 'Sign in' : 'تسجيل الدخول',
-  cont: l === 'en' ? 'Continue to signature' : 'المتابعة إلى التوقيع',
-  submit: l === 'en' ? 'Sign and submit' : 'وقّع وأرسل',
-  heading: l === 'en' ? 'Declaration submitted' : 'تم إرسال الإقرار',
-});
-
-async function toDone(page: Page, locale: Locale = 'en', creds = byLocale(locale)) {
-  const s = L(locale);
-  await page.addInitScript((l) => localStorage.setItem('pacf.locale', l), locale);
+async function toDone(page: Page, creds = STUDENTS.mai) {
+  const s = L;
   await page.goto('/');
-  await fillLogin(page, locale, creds);
+  await fillLogin(page, creds);
   await page.locator('.term').first().waitFor();
   for (let i = 0; i < 5; i++) await page.locator('.term').nth(i).locator('.term__title label').click();
   await page.getByRole('button', { name: s.cont }).click();
@@ -61,7 +49,7 @@ test('leaves no personal data in the URL or browser storage, and Finish wipes th
   }));
   expect(new URL(leaks.url).search).toBe('');
   expect(new URL(leaks.url).hash).toBe('#done'); // the step name only; nothing about the student
-  expect(leaks.local).toEqual(['pacf.locale']);
+  expect(leaks.local).toEqual([]); // nothing at all: not even a language choice
   expect(leaks.session).toEqual([]);
   expect(leaks.cookie).toBe('');
 
@@ -73,7 +61,7 @@ test('leaves no personal data in the URL or browser storage, and Finish wipes th
   await expect(page.getByLabel('Passport number')).toHaveValue('');
   await expect(page.getByLabel('Full name')).toHaveValue('');
   const body = await page.evaluate(() => document.body.innerHTML);
-  for (const secret of [STUDENTS.mai.passport, '+84912345678', STUDENTS.mai.email, 'Mai Nguyễn', 'Nguyen Thi Mai', 'data:image/png']) expect(body).not.toContain(secret);
+  for (const secret of [STUDENTS.mai.passport, STUDENTS.mai.email, 'Mai Nguyễn', 'Nguyen Thi Mai', 'data:image/png']) expect(body).not.toContain(secret);
   await expect(page.locator('.stepper [aria-current="step"]').first()).toContainText('Sign in');
 });
 
@@ -91,9 +79,8 @@ test('print media shows only the formal declaration, with letterhead, seal and M
   await expect(sheet).toContainText('0001'); // last four of E2E00001
 });
 
-test('the receipt fits at this width, in both languages', async ({ page }, info) => {
-  void info;
-  await toDone(page, 'ar', STUDENTS.longName);
+test('the receipt fits at this width', async ({ page }) => {
+  await toDone(page, STUDENTS.longName);
   const r = await page.evaluate(() => {
     const w = document.documentElement.clientWidth;
     const escapes = [...document.querySelectorAll('body *')]
@@ -107,31 +94,35 @@ test('the receipt fits at this width, in both languages', async ({ page }, info)
   expect(r).toEqual({ overflow: 0, escapes: [] });
 });
 
-for (const locale of ['en', 'ar'] as const) {
-  test(`saves a real PDF that carries the declaration and none of the screen chrome (${locale})`, async ({ page }, info) => {
+{
+  test('saves a real PDF that carries the declaration and none of the screen chrome', async ({ page }, info) => {
     test.skip(info.project.name !== 'desktop-1280', 'PDF output does not depend on the viewport');
-    const creds = byLocale(locale);
-    await toDone(page, locale, creds);
+    const creds = STUDENTS.mai;
+    await toDone(page, creds);
     const ref = (await page.locator('.receipt__ref').textContent())!;
     await page.emulateMedia({ media: 'print' });
     const dir = mkdtempSync(join(tmpdir(), 'pacf-'));
-    const file = join(dir, `declaration-${locale}.pdf`);
+    const file = join(dir, `declaration-en.pdf`);
     writeFileSync(file, await page.pdf({ format: 'A4', printBackground: true, preferCSSPageSize: true }));
     const text = execFileSync('pdftotext', ['-layout', file, '-'], { encoding: 'utf8' });
     const pages = Number(/Pages:\s+(\d+)/.exec(execFileSync('pdfinfo', [file], { encoding: 'utf8' }))![1]);
-    expect(pages).toBeLessThanOrEqual(2);
+    expect(pages).toBe(1); // what the student prints is one A4 page
     expect(text).toContain(ref);
     expect(text).toContain('KFUPM-INTL-PACF');
     expect(text).toContain(creds.passport.slice(-4));
     expect(text).not.toContain(creds.passport);
-    expect(text).not.toContain(creds.phone.replace(/\s/g, ''));
-    for (const chrome of ['Continue to signature', 'Print', 'Pre-Arrival Onboarding Portal']) expect(text).not.toContain(chrome);
-    if (locale === 'en') {
-      expect(text).toContain('Pre-Arrival Compliance Form for International Students');
-      expect(text).toContain('Compliance with Saudi Laws and Regulations');
-      expect(text).toContain('Reporting and Understanding Consequences');
-      expect(text).toContain('Nguyen Thi Mai');
-    }
+    expect(text).toContain('Vietnam'); // the nationality the student chose
+    for (const chrome of ['Continue to signature', 'Print', 'Pre-Arrival Compliance Portal', 'Deanship of Student Affairs • ']) expect(text).not.toContain(chrome);
+    expect(text).toContain('Pre-Arrival Compliance Form for International Students');
+    expect(text).toContain('Compliance with Saudi Laws and Regulations');
+    expect(text).toContain('Reporting and Understanding Consequences');
+    expect(text).toContain('Nguyen Thi Mai');
+
+    // The signature is in the printed page, not only in the data: look for handwriting above the signature line.
+    execFileSync('pdftoppm', ['-r', '80', '-png', '-singlefile', file, join(dir, 'page')]);
+    const ink = await signatureInkAboveLine(page, execFileSync('cat', [join(dir, 'page.png')]));
+    expect(ink.lineFound).toBe(true);
+    expect(ink.inkPixels).toBeGreaterThan(40);
     // Optional: keep the PDFs for a human to look at (PACF_PDF_OUT=/some/dir npm run test:e2e).
     if (process.env.PACF_PDF_OUT) execFileSync('cp', [file, `${process.env.PACF_PDF_OUT}/`]);
   });

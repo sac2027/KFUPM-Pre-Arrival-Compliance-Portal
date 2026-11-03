@@ -1,6 +1,6 @@
-passport_number,full_name,phone_e164,email,nationality,program,intake_term,status
-E2E00001,Nguyen Thi Mai,+84912345678,eyadsalem139@gmail.com,Vietnam,Computer Science,2026-27 Term 1,active
-E2E00002,Mohammed Abdullah Alghamdi,+966551234567,eyadsalem139@gmail.com,Saudi Arabia,Mechanical Engineering,2026-27 Term 1,active
-E2E00003,Abdulrahman bin Mohammed bin Abdullah bin Sulaiman bin Ibrahim bin Saleh bin Fahd bin Nasser Al Alsheikh Alghamdi Alzahrani Alqahtani Aldosari Alsubaie Alotaibi Almutairi Alharbi Alshammari,+966500000099,eyadsalem139@gmail.com,Saudi Arabia,Petroleum Engineering,2026-27 Term 1,active
-E2E00004,Nameh Ahmadi,+989123456789,eyadsalem139@gmail.com,Iran,Chemical Engineering,2026-27 Term 1,active
-E2E00005,Withdrawn Student,+966500000098,eyadsalem139@gmail.com,Saudi Arabia,Physics,2026-27 Term 1,withdrawn
+passport_number,full_name,email,nationality,program,intake_term,status
+E2E00001,Nguyen Thi Mai,eyadsalem139@gmail.com,Vietnam,Computer Science,2026-27 Term 1,active
+E2E00002,Mohammed Abdullah Alghamdi,eyadsalem139@gmail.com,Saudi Arabia,Mechanical Engineering,2026-27 Term 1,active
+E2E00003,Abdulrahman bin Mohammed bin Abdullah bin Sulaiman bin Ibrahim bin Saleh bin Fahd bin Nasser Al Alsheikh Alghamdi Alzahrani Alqahtani Aldosari Alsubaie Alotaibi Almutairi Alharbi Alshammari,eyadsalem139@gmail.com,Saudi Arabia,Petroleum Engineering,2026-27 Term 1,active
+E2E00004,Nameh Ahmadi,eyadsalem139@gmail.com,Iran,Chemical Engineering,2026-27 Term 1,active
+E2E00005,Withdrawn Student,eyadsalem139@gmail.com,Saudi Arabia,Physics,2026-27 Term 1,withdrawn

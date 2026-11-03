@@ -10,3 +10,6 @@ playwright-report
 .dev.vars
 .wrangler
 export
+
+# graphify working caches (the architecture map lives in docs/architecture)
+**/graphify-out/

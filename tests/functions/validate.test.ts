@@ -6,7 +6,7 @@ import { isPdf, parseSubmissionBody, sniffImage } from '../../functions/lib/vali
 import { generateReference } from '../../functions/lib/records';
 
 const PNG = `data:image/png;base64,${Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]).toString('base64')}`;
-const good = { locale: 'en', acceptedTermIds: [...TERM_IDS], signature: { method: 'draw', dataUrl: PNG } };
+const good = { nationality: 'VN', acceptedTermIds: [...TERM_IDS], signature: { method: 'draw', dataUrl: PNG } };
 
 describe('term ids', () => {
   it('match the app’s list exactly', () => expect([...TERM_IDS]).toEqual([...APP_TERM_IDS]));
@@ -20,13 +20,16 @@ describe('parseSubmissionBody', () => {
       expect(r.value.signature.contentType).toBe('image/png');
       expect(r.value.signature.bytes.length).toBe(12);
       expect(r.value.acceptedTermIds).toEqual([...TERM_IDS]);
+      expect(r.value.nationality).toBe('Vietnam'); // the code becomes the country name
     }
   });
   it.each([
     ['four ids', { ...good, acceptedTermIds: TERM_IDS.slice(0, 4) }, /five terms/],
     ['wrong order', { ...good, acceptedTermIds: [...TERM_IDS].reverse() }, /five terms/],
     ['a duplicate instead of the fifth', { ...good, acceptedTermIds: [...TERM_IDS.slice(0, 4), 'saudi-laws'] }, /five terms/],
-    ['a bad locale', { ...good, locale: 'fr' }, /locale/],
+    ['an unknown nationality', { ...good, nationality: 'XX' }, /nationality/],
+    ['a country name instead of its code', { ...good, nationality: 'Vietnam' }, /nationality/],
+    ['no nationality', { acceptedTermIds: good.acceptedTermIds, signature: good.signature }, /nationality/],
     ['an SVG', { ...good, signature: { method: 'upload', dataUrl: 'data:image/svg+xml;base64,PHN2Zz4=' } }, /PNG or JPEG data URL/],
     ['HTML labelled as PNG', { ...good, signature: { method: 'upload', dataUrl: `data:image/png;base64,${Buffer.from('<html>').toString('base64')}` } }, /not a valid PNG/],
     ['a JPEG label on PNG bytes', { ...good, signature: { method: 'upload', dataUrl: PNG.replace('image/png', 'image/jpeg') } }, /not a valid PNG/],

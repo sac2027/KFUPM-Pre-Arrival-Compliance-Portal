@@ -4,6 +4,7 @@
  * reaches authService is clean.
  */
 import * as v from 'valibot';
+import { COUNTRIES } from '../data/countries';
 import { normaliseDigits, stripInvisible, trimJoiners } from './normalise';
 
 export const NAME_MAX = 100;
@@ -13,18 +14,6 @@ export const passportSchema = v.pipe(
   v.transform((s) => normaliseDigits(s).replace(/[\s-]/g, '').toUpperCase()),
   v.nonEmpty('error.required'),
   v.regex(/^[A-Z0-9]{5,20}$/, 'error.passport'),
-);
-
-/** International students: the country code is required. `00` is accepted and turned into `+`. */
-export const phoneSchema = v.pipe(
-  v.string(),
-  v.transform((s) => {
-    const t = normaliseDigits(s).replace(/\(0\)/g, '').replace(/[\s().-]/g, '');
-    return t.startsWith('00') ? `+${t.slice(2)}` : t;
-  }),
-  v.nonEmpty('error.required'),
-  v.check((s) => s.startsWith('+') || !/^\d+$/.test(s), 'error.phone.countryCode'),
-  v.regex(/^\+\d{8,15}$/, 'error.phone'),
 );
 
 export const emailSchema = v.pipe(
@@ -51,11 +40,19 @@ export const nameSchema = v.pipe(
   v.maxLength(NAME_MAX, 'error.name'),
 );
 
+/** One of the codes in the dropdown. Recorded with the declaration, never matched against the roster. */
+export const nationalitySchema = v.pipe(
+  v.string(),
+  v.nonEmpty('error.nationality'),
+  v.picklist(COUNTRIES.map(([code]) => code), 'error.nationality'),
+);
+
+/** Field order on the form: name, email, nationality, passport number. */
 export const loginSchema = v.object({
-  passportNumber: passportSchema,
-  phoneNumber: phoneSchema,
-  email: emailSchema,
   fullName: nameSchema,
+  email: emailSchema,
+  nationality: nationalitySchema,
+  passportNumber: passportSchema,
 });
 
 export type LoginInput = v.InferInput<typeof loginSchema>;

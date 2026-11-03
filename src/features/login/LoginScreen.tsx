@@ -6,6 +6,8 @@ import * as v from 'valibot';
 import { Button } from '../../components/Button';
 import { Icon } from '../../components/Icon';
 import { Field } from '../../components/Field';
+import { SelectField } from '../../components/SelectField';
+import { COUNTRIES } from '../../data/countries';
 import { useI18n } from '../../i18n/I18nProvider';
 import type { MessageKey } from '../../i18n/I18nProvider';
 import { loginSchema } from '../../lib/validators';
@@ -36,7 +38,7 @@ export function LoginScreen({ auth = authService, onLoggedIn, notice }: { auth?:
     resolver,
     mode: 'onBlur',
     reValidateMode: 'onChange',
-    defaultValues: { passportNumber: '', phoneNumber: '', email: '', fullName: '' },
+    defaultValues: { fullName: '', email: '', nationality: '', passportNumber: '' },
   });
   const [pending, setPending] = useState(false);
   const [failure, setFailure] = useState<MessageKey | null>(null);
@@ -83,28 +85,15 @@ export function LoginScreen({ auth = authService, onLoggedIn, notice }: { auth?:
       <p className="login__intro">{t('login.intro')}</p>
       <form className="form" noValidate onSubmit={onSubmit}>
         <Field
-          id="passport"
-          label={t('login.passport')}
-          hint={t('login.passport.hint')}
-          error={err('passportNumber')}
-          dir="ltr"
-          autoComplete="off"
-          autoCapitalize="characters"
+          id="full-name"
+          label={t('login.name')}
+          hint={t('login.name.hint')}
+          error={err('fullName')}
+          dir="auto"
+          autoComplete="name"
           spellCheck={false}
-          maxLength={40}
-          {...register('passportNumber')}
-        />
-        <Field
-          id="phone"
-          label={t('login.phone')}
-          hint={t('login.phone.hint')}
-          error={err('phoneNumber')}
-          type="tel"
-          inputMode="tel"
-          dir="ltr"
-          autoComplete="tel"
-          maxLength={30}
-          {...register('phoneNumber')}
+          maxLength={200}
+          {...register('fullName')}
         />
         <Field
           id="email"
@@ -120,16 +109,27 @@ export function LoginScreen({ auth = authService, onLoggedIn, notice }: { auth?:
           maxLength={254}
           {...register('email')}
         />
+        <SelectField
+          id="nationality"
+          label={t('login.nationality')}
+          hint={t('login.nationality.hint')}
+          placeholder={t('login.nationality.placeholder')}
+          options={COUNTRIES.map(([code, name]) => [code, name] as const)}
+          error={err('nationality')}
+          autoComplete="country"
+          {...register('nationality')}
+        />
         <Field
-          id="full-name"
-          label={t('login.name')}
-          hint={t('login.name.hint')}
-          error={err('fullName')}
-          dir="auto"
-          autoComplete="name"
+          id="passport"
+          label={t('login.passport')}
+          hint={t('login.passport.hint')}
+          error={err('passportNumber')}
+          dir="ltr"
+          autoComplete="off"
+          autoCapitalize="characters"
           spellCheck={false}
-          maxLength={200}
-          {...register('fullName')}
+          maxLength={40}
+          {...register('passportNumber')}
         />
         {failure && (
           <p className="form__alert" role="alert">

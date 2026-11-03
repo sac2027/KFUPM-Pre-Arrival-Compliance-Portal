@@ -2,15 +2,11 @@ import { expect, test } from '@playwright/test';
 import { confirmAllTerms, drawSignature, fillLogin, L, settleReceipt } from './helpers';
 import { STUDENTS } from './students';
 
-test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('pacf.locale', 'en'));
-});
-
 test('the URL names the step and nothing else; a deep link to a later step opens sign-in', async ({ page }) => {
   await page.goto('/#sign');
   await expect(page.locator('#login-heading')).toBeVisible();
   expect(new URL(page.url()).hash).toBe('#login');
-  await fillLogin(page, 'en', STUDENTS.mai);
+  await fillLogin(page, STUDENTS.mai);
   await expect(page.locator('#terms-heading')).toBeFocused();
   const u = new URL(page.url());
   expect(u.hash).toBe('#terms');
@@ -20,8 +16,8 @@ test('the URL names the step and nothing else; a deep link to a later step opens
 
 test('Back from the signature returns to the terms with the ticks kept; Forward returns to the signature', async ({ page }) => {
   await page.goto('/');
-  await fillLogin(page, 'en', STUDENTS.mai);
-  await confirmAllTerms(page, 'en');
+  await fillLogin(page, STUDENTS.mai);
+  await confirmAllTerms(page);
   await page.goBack();
   await expect(page.locator('#terms-heading')).toBeVisible();
   await expect(page.getByRole('checkbox', { checked: true })).toHaveCount(5);
@@ -32,7 +28,7 @@ test('Back from the signature returns to the terms with the ticks kept; Forward 
 
 test('Back from the terms asks first; declining stays, confirming returns to a cleared sign-in that remembers the ticks', async ({ page }) => {
   await page.goto('/');
-  await fillLogin(page, 'en', STUDENTS.mai);
+  await fillLogin(page, STUDENTS.mai);
   await expect(page.locator('#terms-heading')).toBeFocused();
   await page.locator('.term').nth(0).locator('.term__title label').click();
   await page.locator('.term').nth(1).locator('.term__title label').click();
@@ -49,17 +45,17 @@ test('Back from the terms asks first; declining stays, confirming returns to a c
   await expect(page.locator('#login-heading')).toBeVisible();
   await expect(page.getByLabel('Passport number')).toHaveValue('');
   await expect(page.getByRole('status')).toContainText(/terms you confirmed are kept/);
-  await fillLogin(page, 'en', STUDENTS.mai);
+  await fillLogin(page, STUDENTS.mai);
   await expect(page.getByRole('checkbox', { checked: true })).toHaveCount(2); // the ticks came back
 });
 
 test('Back on the receipt stays on the receipt', async ({ page }) => {
   await page.goto('/');
-  await fillLogin(page, 'en', STUDENTS.mai);
-  await confirmAllTerms(page, 'en');
+  await fillLogin(page, STUDENTS.mai);
+  await confirmAllTerms(page);
   await drawSignature(page);
-  await page.getByRole('button', { name: L('en').submit }).click();
-  await expect(page.getByRole('heading', { level: 2, name: L('en').heading })).toBeFocused({ timeout: 15_000 });
+  await page.getByRole('button', { name: L.submit }).click();
+  await expect(page.getByRole('heading', { level: 2, name: L.heading })).toBeFocused({ timeout: 15_000 });
   await settleReceipt(page);
   const ref = await page.locator('.receipt__ref').textContent();
   await page.goBack();

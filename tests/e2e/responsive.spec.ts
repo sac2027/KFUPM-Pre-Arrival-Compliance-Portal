@@ -1,18 +1,16 @@
-/** The responsive matrix: every step at every supported width, in both languages. Viewport-independent, so one project runs it. */
+/** The responsive matrix: every step at every supported width. Viewport-independent, so one project runs it. */
 import { expect, test } from '@playwright/test';
 import { clipped, confirmAllTerms, drawSignature, fillLogin, L, overflow, settleReceipt } from './helpers';
-import type { Locale } from './helpers';
-import { byLocale } from './students';
+import { STUDENTS } from './students';
 
 const WIDTHS = [320, 360, 375, 768, 1024, 1280, 1920] as const;
 
-for (const locale of ['en', 'ar'] as const satisfies readonly Locale[]) {
+{
   for (const width of WIDTHS) {
-    test(`every step fits at ${width}px (${locale})`, async ({ page }, info) => {
+    test(`every step fits at ${width}px`, async ({ page }, info) => {
       test.skip(info.project.name !== 'desktop-1280', 'this test sets its own viewport');
-      const s = L(locale);
+      const s = L;
       await page.setViewportSize({ width, height: width >= 1024 ? 900 : 740 });
-      await page.addInitScript((l) => localStorage.setItem('pacf.locale', l), locale);
       await page.goto('/');
       await page.evaluate(() => document.fonts.ready);
 
@@ -31,10 +29,10 @@ for (const locale of ['en', 'ar'] as const satisfies readonly Locale[]) {
       const logo = (await page.locator('.masthead__logo').boundingBox())!;
       expect(Math.abs(logo.width / logo.height - 2657 / 1083)).toBeLessThan(0.03); // lockup never distorted
 
-      await fillLogin(page, locale, byLocale(locale));
+      await fillLogin(page, STUDENTS.mai);
       await expect(page.locator('#terms-heading')).toBeFocused();
       await fits('terms');
-      await confirmAllTerms(page, locale);
+      await confirmAllTerms(page);
       await fits('sign');
       await drawSignature(page);
       await page.getByRole('button', { name: s.submit }).click();

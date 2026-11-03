@@ -56,11 +56,6 @@
   border-color: var(--error);
 }
 
-/* LTR data (passport, phone) sits flush with the labels in an RTL page. */
-[dir='rtl'] .field__input[dir='ltr'] {
-  text-align: end;
-}
-
 .field__hint,
 .field__error {
   margin: 0;
@@ -174,4 +169,9 @@
   .btn {
     justify-self: stretch;
   }
+}
+
+.field__select {
+  padding-block: 0.5rem;
+  cursor: pointer;
 }

@@ -19,14 +19,14 @@ describe('compliance-terms.json', () => {
     expect([...TERM_IDS]).toEqual(terms.terms.map((t) => t.id));
   });
 
-  it('has non-empty English and Arabic for every user-visible string', () => {
+  it('has non-empty English for every user-visible string', () => {
     for (const t of terms.terms) {
-      for (const loc of ['en', 'ar'] as const) {
+      for (const loc of ['en'] as const) {
         expect(t.title[loc].trim(), `${t.id} title ${loc}`).not.toBe('');
         expect(termText(t, loc, terms.links).trim().length, `${t.id} body ${loc}`).toBeGreaterThan(40);
       }
     }
-    for (const loc of ['en', 'ar'] as const) {
+    for (const loc of ['en'] as const) {
       expect(terms.document.title[loc]).toBeTruthy();
       expect(terms.document.intro[loc]).toBeTruthy();
       expect(terms.document.closing[loc]).toBeTruthy();
@@ -35,7 +35,7 @@ describe('compliance-terms.json', () => {
 
   it('resolves every linkId and uses https URLs only', () => {
     for (const t of terms.terms) {
-      for (const loc of ['en', 'ar'] as const) {
+      for (const loc of ['en'] as const) {
         for (const seg of t.body[loc]) {
           if ('linkId' in seg) expect(terms.links[seg.linkId], seg.linkId).toBeDefined();
         }
@@ -43,16 +43,13 @@ describe('compliance-terms.json', () => {
     }
     for (const [id, link] of Object.entries(terms.links)) {
       expect(link.url, id).toMatch(/^https:\/\//);
-      expect(link.label.en && link.label.ar, id).toBeTruthy();
+      expect(link.label.en, id).toBeTruthy();
     }
   });
 
-  it('references the same links in English and Arabic of each term', () => {
-    for (const t of terms.terms) {
-      const ids = (loc: 'en' | 'ar') =>
-        t.body[loc].filter((s) => 'linkId' in s).map((s) => (s as { linkId: string }).linkId);
-      expect(ids('ar'), t.id).toEqual(ids('en'));
-    }
+  it('has no Arabic text left in the policy file', () => {
+    expect(JSON.stringify(raw)).not.toMatch(/[\u0600-\u06FF]/);
+    expect(JSON.stringify(raw)).not.toContain('"ar"');
   });
 
   it('keeps term 3 at the docx base wording: appearance spelled correctly, no tracked "ensure that" suggestion', () => {
@@ -82,10 +79,10 @@ describe('compliance-terms.json', () => {
     expect(terms.document.stage.en).toBe('Pre-Arrival State');
   });
 
-  it('rejects a term missing its Arabic title and names the path', () => {
+  it('rejects a term missing its title and names the path', () => {
     const bad = structuredClone(raw) as unknown as { terms: Array<{ title: Record<string, unknown> }> };
-    delete bad.terms[1]!.title.ar;
-    expect(() => parseTerms(bad)).toThrow(/terms\.1\.title\.ar/);
+    delete bad.terms[1]!.title.en;
+    expect(() => parseTerms(bad)).toThrow(/terms\.1\.title\.en/);
   });
 
   it('rejects a body that references an unknown link', () => {

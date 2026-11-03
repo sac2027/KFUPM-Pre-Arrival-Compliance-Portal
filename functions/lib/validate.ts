@@ -1,10 +1,12 @@
+import { countryName } from '../../src/data/countries';
 import { TERM_IDS } from './terms';
 import type { TermId } from './terms';
 
 export const MAX_SIGNATURE_BYTES = 2 * 1024 * 1024;
 
 export interface SubmissionInput {
-  locale: 'en' | 'ar';
+  /** English country name, from the ISO code the form sends. */
+  nationality: string;
   acceptedTermIds: TermId[];
   signature: { method: 'draw' | 'upload'; bytes: Uint8Array; contentType: 'image/png' | 'image/jpeg' };
 }
@@ -35,7 +37,8 @@ export function sniffImage(bytes: Uint8Array): 'image/png' | 'image/jpeg' | null
 export function parseSubmissionBody(body: unknown): ValidationResult {
   if (!body || typeof body !== 'object') return { ok: false, message: 'Request body must be an object.' };
   const b = body as Record<string, unknown>;
-  if (b.locale !== 'en' && b.locale !== 'ar') return { ok: false, message: 'locale must be en or ar.' };
+  const nationality = typeof b.nationality === 'string' ? countryName(b.nationality) : null;
+  if (!nationality) return { ok: false, message: 'nationality must be one of the listed countries.' };
   const ids = b.acceptedTermIds;
   if (!Array.isArray(ids) || ids.length !== TERM_IDS.length || !TERM_IDS.every((id, i) => ids[i] === id)) {
     return { ok: false, message: 'All five terms must be accepted, in order.' };
@@ -48,7 +51,7 @@ export function parseSubmissionBody(body: unknown): ValidationResult {
   if (decoded.bytes.length > MAX_SIGNATURE_BYTES) return { ok: false, message: 'The signature image is larger than 2 MB.' };
   const sniffed = sniffImage(decoded.bytes);
   if (!sniffed || sniffed !== decoded.contentType) return { ok: false, message: 'The signature image is not a valid PNG or JPEG.' };
-  return { ok: true, value: { locale: b.locale, acceptedTermIds: [...TERM_IDS], signature: { method: sig.method, bytes: decoded.bytes, contentType: sniffed } } };
+  return { ok: true, value: { nationality, acceptedTermIds: [...TERM_IDS], signature: { method: sig.method, bytes: decoded.bytes, contentType: sniffed } } };
 }
 
 export function isPdf(bytes: Uint8Array): boolean {

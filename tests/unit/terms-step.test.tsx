@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { TermsStep } from '../../src/features/terms/TermsStep';
 import { I18nProvider } from '../../src/i18n/I18nProvider';
-import type { Locale } from '../../src/i18n/I18nProvider';
 import { loadTerms } from '../../src/lib/terms';
 import { TERM_IDS } from '../../src/lib/termsSchema';
 import type { TermId } from '../../src/lib/termsSchema';
@@ -15,25 +14,27 @@ const session: Session = {
   student: { fullName: 'Mai Nguyễn', email: 'm•••@example.com', passportLast4: '4567' },
   issuedAt: '2026-11-01T10:00:00.000Z',
   expiresAt: '2026-11-01T10:30:00.000Z',
+  nationality: 'VN',
   token: 't',
 };
 
-function setup(locale: Locale = 'en', initialAccepted: TermId[] = [], who: Session = session) {
+function setup(initialAccepted: TermId[] = [], who: Session = session) {
   const onContinue = vi.fn();
   render(
-    <I18nProvider initialLocale={locale}>
+    <I18nProvider>
       <TermsStep session={who} initialAccepted={initialAccepted} onContinue={onContinue} />
     </I18nProvider>,
   );
   const user = userEvent.setup();
   const boxes = () => screen.getAllByRole('checkbox') as HTMLInputElement[];
-  const cont = () => screen.getByRole('button', { name: /continue to signature|المتابعة إلى التوقيع/i });
+  const cont = () => screen.getByRole('button', { name: /continue to signature/i });
   return { user, boxes, cont, onContinue };
 }
 
 describe('TermsStep', () => {
-  it.each(['en', 'ar'] as const)('renders the five terms from the JSON in order (%s)', (locale) => {
-    const { boxes } = setup(locale);
+  it('renders the five terms from the JSON in order', () => {
+    const locale = 'en';
+    const { boxes } = setup();
     expect(boxes()).toHaveLength(5);
     TERMS.terms.forEach((t, i) => {
       expect(boxes()[i]).toHaveAccessibleName(`${i + 1}. ${t.title[locale]}`);
@@ -44,25 +45,18 @@ describe('TermsStep', () => {
   it('describes each checkbox by its full term text, and has no select-all', () => {
     const { boxes } = setup();
     expect(boxes()[3]).toHaveAccessibleDescription(/^As a student affiliated with the University/);
-    expect(screen.queryByText(/select all|اختر الكل|تحديد الكل/i)).toBeNull();
+    expect(screen.queryByText(/select all/i)).toBeNull();
     expect(screen.getAllByRole('checkbox')).toHaveLength(5);
   });
 
-  it('shows the declarant name and the sign-in date (Gregorian, Latin digits) in both languages', () => {
-    const en = render(
-      <I18nProvider initialLocale="en">
+  it('shows the declarant name and the sign-in date (Gregorian, Latin digits)', () => {
+    render(
+      <I18nProvider>
         <TermsStep session={session} initialAccepted={[]} onContinue={() => {}} />
       </I18nProvider>,
     );
     expect(screen.getByText('Mai Nguyễn')).toBeInTheDocument();
     expect(screen.getByText('1 November 2026')).toBeInTheDocument();
-    en.unmount();
-    render(
-      <I18nProvider initialLocale="ar">
-        <TermsStep session={session} initialAccepted={[]} onContinue={() => {}} />
-      </I18nProvider>,
-    );
-    expect(screen.getByText('1 نوفمبر 2026')).toBeInTheDocument();
   });
 
   it('keeps Continue inactive until all five are confirmed, announcing progress', async () => {
@@ -97,7 +91,7 @@ describe('TermsStep', () => {
   });
 
   it('pre-checks terms the student already confirmed (coming back from the signature step)', () => {
-    const { boxes, cont } = setup('en', [...TERM_IDS]);
+    const { boxes, cont } = setup([...TERM_IDS]);
     expect(boxes().every((b) => b.checked)).toBe(true);
     expect(cont()).not.toHaveAttribute('aria-disabled', 'true');
   });
@@ -118,7 +112,7 @@ describe('TermsStep', () => {
 
   it('lays out a very long unbroken name without relying on word breaks', () => {
     const long = { ...session, student: { ...session.student, fullName: 'م'.repeat(100) } };
-    setup('ar', [], long);
+    setup([], long);
     const name = screen.getByText('م'.repeat(100));
     expect(name.closest('[dir]')?.getAttribute('dir')).toBe('auto');
   });
@@ -129,7 +123,7 @@ describe('TermsStep: changing details', () => {
     const onChangeDetails = vi.fn();
     const onCancelLeave = vi.fn();
     render(
-      <I18nProvider initialLocale="en">
+      <I18nProvider>
         <TermsStep session={session} initialAccepted={[]} onContinue={() => {}} onChangeDetails={onChangeDetails} leaveRequested={leaveRequested} onCancelLeave={onCancelLeave} />
       </I18nProvider>,
     );

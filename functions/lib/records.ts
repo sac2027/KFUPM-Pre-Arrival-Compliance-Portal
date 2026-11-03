@@ -38,8 +38,8 @@ export interface SubmissionRow {
   full_name: string;
   passport_last4: string;
   email: string;
-  phone_e164: string;
-  locale: 'en' | 'ar';
+  nationality: string | null;
+  locale: 'en';
   pdf_key: string | null;
   pdf_sha256: string | null;
   submitted_at: string;
@@ -49,7 +49,7 @@ export interface SubmissionRow {
 }
 
 export async function getSubmission(env: Env, id: string): Promise<SubmissionRow | null> {
-  return env.RECORDS.prepare('SELECT id, reference_number, full_name, passport_last4, email, phone_e164, locale, pdf_key, pdf_sha256, submitted_at, email_status, email_message_id, email_error FROM submissions WHERE id = ?').bind(id).first<SubmissionRow>();
+  return env.RECORDS.prepare('SELECT id, reference_number, full_name, passport_last4, email, nationality, locale, pdf_key, pdf_sha256, submitted_at, email_status, email_message_id, email_error FROM submissions WHERE id = ?').bind(id).first<SubmissionRow>();
 }
 
 export async function sha256Hex(bytes: Uint8Array): Promise<string> {
