@@ -26,6 +26,11 @@ member of the account, not by moving things between accounts (Cloudflare has no 
 Full data export, if a move between accounts is ever needed: `npm run data:export` writes both databases as SQL and
 downloads every PDF and signature from the bucket into `./export/` (see section 8).
 
+> **No terminal?** Everything in sections 2–4 can be done in the Cloudflare dashboard instead: create the databases and bucket
+> there, then paste the ready-made SQL files in `docs/setup/` into each database's **Console** (see `docs/setup/README.md`).
+> If your databases were created before the phone number was removed, run `4-update-roster-database.sql` and
+> `5-update-records-database.sql` once.
+
 ## 2. Create the two databases and apply the schema
 
 ```bash
@@ -58,15 +63,18 @@ npm run roster:import -- data/roster.sample.csv --remote
 
 This loads the four test students below. Only these four can sign in until a real roster is imported.
 
-| Passport number | Phone number (with country code) | Email | Full name |
-| --- | --- | --- | --- |
-| `TEST0001` | `+966500000001` | `s202368990@kfupm.edu.sa` | `Eyad Salem` |
-| `TEST0002` | `+966500000002` | `eyadsalem139@gmail.com` | `Eyad Salem` |
-| `TEST0003` | `+966500000003` | `sac@kfupm.edu.sa` | `Sara Ahmed Alqahtani` |
-| `TEST0004` | `+966500000004` | `anas.ammari@kfupm.edu.sa` | `Anas Ammari` |
+| Full name | Email | Passport number |
+| --- | --- | --- |
+| `Eyad Salem` | `s202368990@kfupm.edu.sa` | `TEST0001` |
+| `Eyad Salem` | `eyadsalem139@gmail.com` | `TEST0002` |
+| `Sara Ahmed Alqahtani` | `sac@kfupm.edu.sa` | `TEST0003` |
+| `Anas Ammari` | `anas.ammari@kfupm.edu.sa` | `TEST0004` |
 
-All four details must match. The name may be typed in any order or case (`salem eyad` works); the other three must be
-exact (spaces and `+`/`00` are forgiven). To add real students later, make a CSV with the same header as
+Name, email and passport number must match. The name may be typed in any order or case (`salem eyad` works); the email and
+passport number must be exact (spaces and case are forgiven). The student also picks a **nationality** from a dropdown; it
+is recorded with the declaration and is never checked against the roster. Phone numbers are not collected.
+
+To add real students later, make a CSV with the same header as
 `data/roster.sample.csv` and run the same command with your file. Re-running updates students by passport number.
 `data/roster.e2e.csv` is for the automated tests only; do not import it to production.
 

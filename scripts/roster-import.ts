@@ -2,7 +2,7 @@
  * Import (or update) students from a CSV into the roster database.
  *   npm run roster:import -- data/roster.sample.csv            (local database, for development and tests)
  *   npm run roster:import -- path/to/students.csv --remote     (the live database in Cloudflare)
- * Columns: passport_number,full_name,phone_e164,email,nationality,program,intake_term,status
+ * Columns: passport_number,full_name,email,nationality,program,intake_term,status
  * Rows with problems are listed and skipped; good rows are upserted by passport number.
  */
 import { execFileSync } from 'node:child_process';

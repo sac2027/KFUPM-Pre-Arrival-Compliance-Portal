@@ -3,7 +3,6 @@ import { sha256Hex } from './records';
 
 export interface DeclarationEmail {
   to: string;
-  locale: 'en' | 'ar';
   fullName: string;
   referenceNumber: string;
   submittedAt: string;
@@ -30,45 +29,25 @@ const COPY = {
         'If you did not submit this form, reply to this email.',
         '',
         'Deanship of Student Affairs',
-        'International Students Office',
         'King Fahd University of Petroleum & Minerals',
-      ].join('\n'),
-  },
-  ar: {
-    subject: (ref: string) => `نموذج الالتزام قبل الوصول الموقّع (${ref})`,
-    body: (name: string, ref: string, when: string) =>
-      [
-        `عزيزي/عزيزتي ${name}،`,
-        '',
-        'شكرًا لك. استلمت جامعة الملك فهد للبترول والمعادن نموذج الالتزام قبل الوصول للطلاب الدوليين موقّعًا منك.',
-        `رقم المرجع الخاص بك هو ${ref}. تم الاستلام في ${when}.`,
-        '',
-        'نسخة من الإقرار الموقّع مرفقة بصيغة PDF. يرجى الاحتفاظ بها وإحضارها معك عند الوصول.',
-        '',
-        'إذا لم تكن أنت من أرسل هذا النموذج، فيرجى الرد على هذه الرسالة.',
-        '',
-        'عمادة شؤون الطلاب',
-        'مكتب الطلاب الدوليين',
-        'جامعة الملك فهد للبترول والمعادن',
       ].join('\n'),
   },
 };
 
-function when(iso: string, locale: 'en' | 'ar'): string {
-  const tag = locale === 'ar' ? 'ar-u-nu-latn-ca-gregory' : 'en-GB-u-ca-gregory';
-  return new Intl.DateTimeFormat(tag, { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZoneName: 'short', timeZone: 'Asia/Riyadh' }).format(new Date(iso));
+function when(iso: string): string {
+  return new Intl.DateTimeFormat('en-GB-u-ca-gregory', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZoneName: 'short', timeZone: 'Asia/Riyadh' }).format(new Date(iso));
 }
 
 /** What gets sent, independent of the driver. */
 export function buildMessage(env: Pick<Env, 'EMAIL_FROM' | 'EMAIL_REPLY_TO' | 'EMAIL_BCC'>, m: DeclarationEmail) {
-  const copy = COPY[m.locale];
+  const copy = COPY.en;
   return {
     from: env.EMAIL_FROM,
     to: [m.to],
     reply_to: env.EMAIL_REPLY_TO || undefined,
     bcc: env.EMAIL_BCC ? [env.EMAIL_BCC] : undefined,
     subject: copy.subject(m.referenceNumber),
-    text: copy.body(m.fullName, m.referenceNumber, when(m.submittedAt, m.locale)),
+    text: copy.body(m.fullName, m.referenceNumber, when(m.submittedAt)),
     attachments: [{ filename: attachmentName(m.referenceNumber), content: m.pdf }],
   };
 }

@@ -1,15 +1,14 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { fillLogin } from './helpers';
-import { byLocale } from './students';
+import { STUDENTS } from './students';
 
-const open = async (page: Page, locale: 'en' | 'ar') => {
-  await page.addInitScript((l) => localStorage.setItem('pacf.locale', l), locale);
+const open = async (page: Page) => {
   await page.goto('/');
   await page.evaluate(() => document.fonts.ready);
 };
 
-const login = (page: Page, locale: 'en' | 'ar') => fillLogin(page, locale, byLocale(locale));
+const login = (page: Page) => fillLogin(page, STUDENTS.mai);
 
 /** Armed before the click: grabs the step's entrance transition on the frame it starts, then samples both ends. */
 const armCapture = (page: Page) =>
@@ -45,36 +44,34 @@ const armCapture = (page: Page) =>
       }),
   );
 
-for (const locale of ['en', 'ar'] as const) {
-  test(`after sign-in the Terms heading takes focus and the panel enters from the inline-end (${locale})`, async ({ page }) => {
-    await open(page, locale);
-    const captured = armCapture(page);
-    await login(page, locale);
-    const c = await captured;
+test(`after sign-in the Terms heading takes focus and the panel enters from the right`, async ({ page }) => {
+  await open(page);
+  const captured = armCapture(page);
+  await login(page);
+  const c = await captured;
 
-    // What animates, how fast, with which curve.
-    expect(c.props).toEqual(['opacity', 'transform']);
-    expect(c.durations.every((d) => d === 220)).toBe(true);
-    expect(c.easings.every((e) => e === 'cubic-bezier(0.23, 1, 0.32, 1)')).toBe(true);
-    expect(c.startOpacity).toBe(0);
+  // What animates, how fast, with which curve.
+  expect(c.props).toEqual(['opacity', 'transform']);
+  expect(c.durations.every((d) => d === 220)).toBe(true);
+  expect(c.easings.every((e) => e === 'cubic-bezier(0.23, 1, 0.32, 1)')).toBe(true);
+  expect(c.startOpacity).toBe(0);
 
-    // Direction: starts 12px towards the inline-end (right in LTR, left in RTL) and settles in place.
-    const travel = c.startX - c.endX;
-    expect(Math.abs(Math.abs(travel) - 12)).toBeLessThan(1);
-    expect(travel > 0).toBe(locale === 'en');
+  // Direction: starts 12px towards the inline-end (right) and settles in place.
+  const travel = c.startX - c.endX;
+  expect(Math.abs(Math.abs(travel) - 12)).toBeLessThan(1);
+  expect(travel > 0).toBe(true);
 
-    // Focus lands on the new step's heading.
-    await expect(page.getByRole('heading', { level: 2 })).toBeFocused();
-    await expect(page.getByRole('heading', { level: 2 })).toHaveText(locale === 'en' ? 'Terms and responsibilities' : 'الشروط والمسؤوليات');
-    await expect(page.locator('.stepper [aria-current="step"]').first()).toContainText(locale === 'en' ? 'Review terms' : 'مراجعة الشروط');
-  });
-}
+  // Focus lands on the new step's heading.
+  await expect(page.getByRole('heading', { level: 2 })).toBeFocused();
+  await expect(page.getByRole('heading', { level: 2 })).toHaveText('Terms and responsibilities');
+  await expect(page.locator('.stepper [aria-current="step"]').first()).toContainText('Review terms');
+});
 
 test('reduced motion keeps a gentle fade and drops the travel', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await open(page, 'en');
+  await open(page);
   const captured = armCapture(page);
-  await login(page, 'en');
+  await login(page);
   const c = await captured;
   expect(c.props).toEqual(['opacity']);
   expect(c.durations.every((d) => d <= 200)).toBe(true);
@@ -82,16 +79,12 @@ test('reduced motion keeps a gentle fade and drops the travel', async ({ page })
   await expect(page.getByRole('heading', { level: 2 })).toBeFocused(); // focus still moves
 });
 
-test('nothing animates on first load, and switching language on the Terms step keeps the step and focus on the toggle', async ({ page }) => {
-  await open(page, 'en');
+test('nothing animates on first load, and the step change moves focus to the new heading', async ({ page }) => {
+  await open(page);
   expect(await page.evaluate(() => document.querySelector('.step')!.getAnimations().length)).toBe(0);
   expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true);
 
-  await login(page, 'en');
+  await login(page);
   await expect(page.getByRole('heading', { level: 2 })).toBeFocused();
-  await page.getByRole('button', { name: 'العربية' }).click();
-  await expect(page.getByRole('heading', { level: 2 })).toHaveText('الشروط والمسؤوليات');
-  await expect(page.locator('.stepper [aria-current="step"]').first()).toContainText('مراجعة الشروط');
-  await expect(page.getByRole('button', { name: 'English' })).toBeFocused(); // the language switch does not yank focus away
-  expect(await page.evaluate(() => document.documentElement.dir)).toBe('rtl');
+  await expect(page.getByRole('heading', { level: 2 })).toHaveText('Terms and responsibilities');
 });

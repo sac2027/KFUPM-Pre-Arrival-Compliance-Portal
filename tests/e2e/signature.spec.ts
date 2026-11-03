@@ -1,25 +1,18 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { fillLogin } from './helpers';
-import { byLocale } from './students';
+import { STUDENTS } from './students';
 
-type Locale = 'en' | 'ar';
-const T = (l: Locale) => ({
-  passport: l === 'en' ? 'Passport number' : 'رقم جواز السفر',
-  phone: l === 'en' ? 'Phone number' : 'رقم الهاتف',
-  name: l === 'en' ? 'Full name' : 'الاسم الكامل',
-  signin: l === 'en' ? 'Sign in' : 'تسجيل الدخول',
-  cont: l === 'en' ? 'Continue to signature' : 'المتابعة إلى التوقيع',
-  submit: l === 'en' ? 'Sign and submit' : 'وقّع وأرسل',
-  draw: l === 'en' ? 'Draw' : 'رسم',
-  upload: l === 'en' ? 'Upload' : 'رفع صورة',
-});
+const T = {
+  cont: 'Continue to signature',
+  submit: 'Sign and submit',
+  upload: 'Upload',
+};
 
-async function toSign(page: Page, locale: Locale = 'en') {
-  const s = T(locale);
-  await page.addInitScript((l) => localStorage.setItem('pacf.locale', l), locale);
+async function toSign(page: Page) {
+  const s = T;
   await page.goto('/');
-  await fillLogin(page, locale, byLocale(locale));
+  await fillLogin(page, STUDENTS.mai);
   await page.locator('.term').first().waitFor();
   for (let i = 0; i < 5; i++) await page.locator('.term').nth(i).locator('.term__title label').click();
   await page.getByRole('button', { name: s.cont }).click();
@@ -69,7 +62,7 @@ const pngBase64 = (page: Page) =>
     return c.toDataURL('image/png').split(',')[1]!;
   });
 
-const submitBtn = (page: Page, l: Locale = 'en') => page.getByRole('button', { name: T(l).submit });
+const submitBtn = (page: Page) => page.getByRole('button', { name: T.submit });
 
 test('drawing puts real ink on the canvas and activates Submit', async ({ page }) => {
   await toSign(page);
@@ -188,9 +181,9 @@ test('signing submits and moves to Done; Back returns to the terms with all five
   await expect(page.locator('.stepper [aria-current="step"]').first()).toContainText('Done', { timeout: 5000 });
 });
 
-for (const locale of ['en', 'ar'] as const) {
-  test(`the signature step fits the viewport, including the upload tab and an error (${locale})`, async ({ page }) => {
-    await toSign(page, locale);
+{
+  test('the signature step fits the viewport, including the upload tab and an error', async ({ page }) => {
+    await toSign(page);
     const check = () =>
       page.evaluate(() => {
         const w = document.documentElement.clientWidth;
@@ -203,19 +196,19 @@ for (const locale of ['en', 'ar'] as const) {
         return { overflow: document.documentElement.scrollWidth - innerWidth, escapes };
       });
     expect(await check()).toEqual({ overflow: 0, escapes: [] });
-    await page.getByRole('tab', { name: T(locale).upload }).click();
+    await page.getByRole('tab', { name: T.upload }).click();
     await page.locator('input[type="file"]').setInputFiles({ name: 's.svg', mimeType: 'image/svg+xml', buffer: Buffer.from('<svg/>') });
     await expect(page.getByRole('alert')).toBeVisible();
     expect(await check()).toEqual({ overflow: 0, escapes: [] });
   });
 }
 
-test('RTL: the Draw tab is first on the right, and the canvas is not mirrored', async ({ page }) => {
-  await toSign(page, 'ar');
-  const draw = (await page.getByRole('tab', { name: 'رسم' }).boundingBox())!;
-  const up = (await page.getByRole('tab', { name: 'رفع صورة' }).boundingBox())!;
-  expect(draw.x).toBeGreaterThan(up.x);
+test('the Draw tab comes first on the left, and the canvas takes ink as drawn', async ({ page }) => {
+  await toSign(page);
+  const draw = (await page.getByRole('tab', { name: 'Draw' }).boundingBox())!;
+  const up = (await page.getByRole('tab', { name: 'Upload' }).boundingBox())!;
+  expect(draw.x).toBeLessThan(up.x);
   await scribble(page);
   expect(await inkPixels(page)).toBeGreaterThan(200);
-  await expect(submitBtn(page, 'ar')).not.toHaveAttribute('aria-disabled', 'true');
+  await expect(submitBtn(page)).not.toHaveAttribute('aria-disabled', 'true');
 });

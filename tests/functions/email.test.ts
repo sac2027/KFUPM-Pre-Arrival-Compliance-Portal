@@ -4,7 +4,7 @@ import { attachmentName, buildMessage, sendDeclarationEmail } from '../../functi
 import type { Env } from '../../functions/lib/env';
 
 const pdf = new TextEncoder().encode('%PDF-1.7 fake');
-const m = { to: 'eyadsalem139@gmail.com', locale: 'en' as const, fullName: 'Eyad Salem', referenceNumber: 'PACF-2026-ABCDEF', submittedAt: '2026-11-02T08:15:00.000Z', pdf, submissionId: 'sub-1' };
+const m = { to: 'eyadsalem139@gmail.com', fullName: 'Eyad Salem', referenceNumber: 'PACF-2026-ABCDEF', submittedAt: '2026-11-02T08:15:00.000Z', pdf, submissionId: 'sub-1' };
 const baseEnv = { EMAIL_FROM: 'KFUPM Student Affairs <onboarding@resend.dev>', EMAIL_REPLY_TO: 'eyadsalem139@gmail.com', EMAIL_BCC: '' };
 
 describe('buildMessage', () => {
@@ -20,10 +20,10 @@ describe('buildMessage', () => {
     expect(msg.attachments[0]!.filename).toBe('KFUPM-PACF-PACF-2026-ABCDEF.pdf'.replace('KFUPM-PACF-PACF', 'KFUPM-PACF-PACF'));
     expect(attachmentName('PACF-2026-ABCDEF')).toBe('KFUPM-PACF-PACF-2026-ABCDEF.pdf');
   });
-  it('writes Arabic for Arabic sessions and copies a deanship mailbox when configured', () => {
-    const msg = buildMessage({ ...baseEnv, EMAIL_BCC: 'records@example.org' }, { ...m, locale: 'ar' });
-    expect(msg.subject).toContain('نموذج الالتزام قبل الوصول');
-    expect(msg.text).toContain('عمادة شؤون الطلاب');
+  it('signs off as the Deanship (no sub-office) and copies a deanship mailbox when configured', () => {
+    const msg = buildMessage({ ...baseEnv, EMAIL_BCC: 'records@example.org' }, m);
+    expect(msg.text).toContain('Deanship of Student Affairs');
+    expect(msg.text).not.toContain('International Students Office');
     expect(msg.bcc).toEqual(['records@example.org']);
   });
 });

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-const good = { passportNumber: 'TEST0001', phoneNumber: '+966 50 000 0001', fullName: 'Eyad Salem', email: 'S202368990@kfupm.edu.sa' };
+const good = { passportNumber: 'TEST0001', fullName: 'Eyad Salem', email: 'S202368990@kfupm.edu.sa' };
 
 const onlyDesktop = (info: { project: { name: string } }) => test.skip(info.project.name !== 'desktop-1280', 'not viewport dependent');
 
@@ -16,13 +16,11 @@ test.describe('POST /api/verify', () => {
     expect(new Date(body.session.expiresAt).getTime() - new Date(body.session.issuedAt).getTime()).toBe(30 * 60 * 1000);
     expect(body.token.split('.')).toHaveLength(3);
     expect(JSON.stringify(body)).not.toContain('TEST0001');
-    expect(JSON.stringify(body)).not.toContain('+966500000001');
   });
 
   test('any single mismatch, an unknown passport, or a malformed body gets the same generic answer', async ({ request }, info) => {
     onlyDesktop(info);
     const cases = [
-      { ...good, phoneNumber: '+966500000009' },
       { ...good, email: 'someone.else@kfupm.edu.sa' },
       { ...good, fullName: 'Eyad Salim' },
       { ...good, passportNumber: 'NOPE9999' },
@@ -37,6 +35,9 @@ test.describe('POST /api/verify', () => {
     expect([...bodies][0]).toContain('"code":"no_match"');
     const malformed = await request.post('/api/verify', { data: { passportNumber: 'TEST0001' } });
     expect(malformed.status()).toBe(400);
+    // a phone number or nationality in the body is neither required nor checked
+    const extra = await request.post('/api/verify', { data: { ...good, phoneNumber: '+1', nationality: 'JP' } });
+    expect(extra.status()).toBe(200);
   });
 
   test('the sixth failure for one passport inside 15 minutes is throttled; successful sign-ins never count', async ({ request }, info) => {

@@ -16,7 +16,7 @@ export const dbService: DbService = {
     const r = await api<{ id: string; referenceNumber: string; submittedAt: string }>('/api/submissions', {
       method: 'POST',
       token: payload.session.token,
-      body: JSON.stringify({ locale: payload.locale, acceptedTermIds: payload.acceptedTermIds, signature: payload.signature }),
+      body: JSON.stringify({ nationality: payload.session.nationality, acceptedTermIds: payload.acceptedTermIds, signature: payload.signature }),
     });
     return { id: r.id, referenceNumber: r.referenceNumber, receivedAt: r.submittedAt };
   },

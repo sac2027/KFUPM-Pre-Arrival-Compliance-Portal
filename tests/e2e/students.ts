@@ -1,21 +1,20 @@
 /** Credentials that exist in the local test roster (data/roster.sample.csv + data/roster.e2e.csv). */
 export interface Creds {
-  passport: string;
-  phone: string;
-  email: string;
   name: string;
+  email: string;
+  /** ISO code chosen in the Nationality dropdown. It is recorded, not checked. */
+  nationality: string;
+  passport: string;
 }
 
 export const STUDENTS = {
-  /** The user's own test entry (data/roster.sample.csv). */
-  eyad: { passport: 'TEST0001', phone: '+966500000001', email: 's202368990@kfupm.edu.sa', name: 'Eyad Salem' },
-  anas: { passport: 'TEST0004', phone: '+966500000004', email: 'anas.ammari@kfupm.edu.sa', name: 'Anas Ammari' },
+  /** The user's own test entries (data/roster.sample.csv). */
+  eyad: { name: 'Eyad Salem', email: 's202368990@kfupm.edu.sa', nationality: 'SA', passport: 'TEST0001' },
+  anas: { name: 'Anas Ammari', email: 'anas.ammari@kfupm.edu.sa', nationality: 'TN', passport: 'TEST0004' },
   /** Test-only rows (data/roster.e2e.csv). */
-  mai: { passport: 'E2E00001', phone: '+84 912 345 678', email: 'eyadsalem139@gmail.com', name: 'Mai Nguyễn' }, // roster: "Nguyen Thi Mai"
-  mohammed: { passport: 'E2E00002', phone: '+966551234567', email: 'eyadsalem139@gmail.com', name: 'Mohammed Alghamdi' },
-  longName: { passport: 'E2E00003', phone: '+966500000099', email: 'eyadsalem139@gmail.com', name: 'Abdulrahman Alghamdi' },
-  persian: { passport: 'E2E00004', phone: '+989123456789', email: 'eyadsalem139@gmail.com', name: 'Nameh Ahmadi' },
-  withdrawn: { passport: 'E2E00005', phone: '+966500000098', email: 'eyadsalem139@gmail.com', name: 'Withdrawn Student' },
+  mai: { name: 'Mai Nguyễn', email: 'eyadsalem139@gmail.com', nationality: 'VN', passport: 'E2E00001' }, // roster: "Nguyen Thi Mai"
+  mohammed: { name: 'Mohammed Alghamdi', email: 'eyadsalem139@gmail.com', nationality: 'SA', passport: 'E2E00002' },
+  longName: { name: 'Abdulrahman Alghamdi', email: 'eyadsalem139@gmail.com', nationality: 'SA', passport: 'E2E00003' },
+  persian: { name: 'Nameh Ahmadi', email: 'eyadsalem139@gmail.com', nationality: 'IR', passport: 'E2E00004' },
+  withdrawn: { name: 'Withdrawn Student', email: 'eyadsalem139@gmail.com', nationality: 'SA', passport: 'E2E00005' },
 } satisfies Record<string, Creds>;
-
-export const byLocale = (locale: 'en' | 'ar'): Creds => (locale === 'en' ? STUDENTS.mai : STUDENTS.mohammed);

@@ -9,7 +9,7 @@ export function createMockAuthService(opts: MockOptions = {}): AuthService {
     login(credentials: Credentials): Promise<Session> {
       return simulate(opts, () => {
         const blank = Object.values(credentials).some((v) => v.trim() === '');
-        if (blank) throw new ServiceError('invalid_credentials', 'All four fields are required.');
+        if (blank) throw new ServiceError('invalid_credentials', 'All fields are required.');
         const issuedAt = new Date();
         return {
           sessionId: crypto.randomUUID(),
@@ -20,6 +20,7 @@ export function createMockAuthService(opts: MockOptions = {}): AuthService {
           },
           issuedAt: issuedAt.toISOString(),
           expiresAt: new Date(issuedAt.getTime() + 30 * 60 * 1000).toISOString(),
+          nationality: credentials.nationality,
           token: 'mock-token',
         };
       });

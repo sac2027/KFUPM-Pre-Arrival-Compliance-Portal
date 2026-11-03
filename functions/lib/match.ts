@@ -11,16 +11,6 @@ export function normalisePassport(s: string): string {
   return asciiDigits(s.normalize('NFKC')).toUpperCase().replace(/[^A-Z0-9]/g, '');
 }
 
-/** E.164 (`+` and 8–15 digits) or null. Accepts `00` for `+`, spaces, hyphens, dots and a bracketed trunk `(0)`. */
-export function normalisePhone(s: string): string | null {
-  let t = asciiDigits(s.normalize('NFKC')).trim().replace(/\(0\)/g, '');
-  if (t.startsWith('00')) t = `+${t.slice(2)}`;
-  if (!t.startsWith('+')) return null;
-  const digits = t.slice(1).replace(/[\s().-]/g, '');
-  if (!/^\d{8,15}$/.test(digits)) return null;
-  return `+${digits}`;
-}
-
 export function normaliseEmail(s: string): string {
   return s.normalize('NFKC').trim().toLowerCase();
 }
@@ -54,7 +44,6 @@ export function namesMatch(typed: string, roster: string): boolean {
 export interface StudentRow {
   passport_number: string;
   full_name: string;
-  phone_e164: string;
   email: string;
   nationality: string | null;
   program: string | null;

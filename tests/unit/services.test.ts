@@ -5,12 +5,11 @@ import { createMockDbService } from '../../src/services/dbService.mock';
 import { ServiceError } from '../../src/services/types';
 import type { Credentials, Session, SubmissionPayload } from '../../src/services/types';
 
-const creds: Credentials = { passportNumber: 'A1234567', phoneNumber: '+966551234567', email: 'm@example.com', fullName: 'محمد عبدالله' };
+const creds: Credentials = { passportNumber: 'A1234567', email: 'm@example.com', nationality: 'SA', fullName: 'محمد عبدالله' };
 const PNG = 'data:image/png;base64,iVBORw0KGgo=';
 
 const payload = (over: Partial<SubmissionPayload> = {}): SubmissionPayload => ({
-  session: { sessionId: 's-1', student: { fullName: creds.fullName, email: 'm•••@example.com', passportLast4: '4567' }, issuedAt: '2026-11-01T10:00:00.000Z', expiresAt: '2026-11-01T10:30:00.000Z', token: 't' } satisfies Session,
-  locale: 'ar',
+  session: { sessionId: 's-1', student: { fullName: creds.fullName, email: 'm•••@example.com', passportLast4: '4567' }, issuedAt: '2026-11-01T10:00:00.000Z', expiresAt: '2026-11-01T10:30:00.000Z', nationality: 'SA', token: 't' } satisfies Session,
   documentRef: 'KFUPM-INTL-PACF',
   acceptedTermIds: [...TERM_IDS],
   signature: { method: 'draw', dataUrl: PNG },
@@ -34,7 +33,7 @@ describe('authService (mock)', () => {
 
   it('rejects with invalid_credentials when any field is blank', async () => {
     const auth = createMockAuthService({ latencyMs: 0 });
-    for (const bad of [{ ...creds, passportNumber: ' ' }, { ...creds, phoneNumber: '' }, { ...creds, email: '' }, { ...creds, fullName: '' }]) {
+    for (const bad of [{ ...creds, passportNumber: ' ' }, { ...creds, nationality: '' }, { ...creds, email: '' }, { ...creds, fullName: '' }]) {
       await expect(auth.login(bad)).rejects.toMatchObject({ code: 'invalid_credentials' });
     }
   });

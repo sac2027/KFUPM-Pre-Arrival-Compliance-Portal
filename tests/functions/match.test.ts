@@ -1,22 +1,12 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { nameKey, namesMatch, normaliseEmail, normalisePassport, normalisePhone } from '../../functions/lib/match';
+import { nameKey, namesMatch, normaliseEmail, normalisePassport } from '../../functions/lib/match';
 
 describe('normalisePassport', () => {
   it('upper-cases and keeps letters and digits only', () => {
     expect(normalisePassport(' test-0001 ')).toBe('TEST0001');
     expect(normalisePassport('n١٢٣٤٥٦٧')).toBe('N1234567'); // Arabic-Indic digits
   });
-});
-
-describe('normalisePhone (E.164 or nothing)', () => {
-  it.each([
-    ['+966 50 000 0001', '+966500000001'],
-    ['00966500000001', '+966500000001'],
-    ['+44 (0) 7700 900123', '+447700900123'], // trunk 0 in brackets dropped
-    ['+٩٦٦٥٠٠٠٠٠٠٠١', '+966500000001'],
-  ])('%s → %s', (input, out) => expect(normalisePhone(input)).toBe(out));
-  it.each(['0501234567', '501234567', '+1', '+12345678901234567', 'abc', ''])('rejects %s', (input) => expect(normalisePhone(input)).toBeNull());
 });
 
 describe('normaliseEmail', () => {

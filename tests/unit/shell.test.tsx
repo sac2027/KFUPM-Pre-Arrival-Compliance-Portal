@@ -4,10 +4,9 @@ import { describe, expect, it } from 'vitest';
 import { Masthead } from '../../src/components/Masthead';
 import { Stepper } from '../../src/components/Stepper';
 import { I18nProvider } from '../../src/i18n/I18nProvider';
-import type { Locale } from '../../src/i18n/I18nProvider';
 import type { Step } from '../../src/state/flow';
 
-const ui = (node: React.ReactNode, locale: Locale = 'en') => render(<I18nProvider initialLocale={locale}>{node}</I18nProvider>);
+const ui = (node: React.ReactNode) => render(<I18nProvider>{node}</I18nProvider>);
 
 describe('Stepper', () => {
   it('lists four steps and marks only the current one with aria-current="step"', () => {
@@ -28,21 +27,17 @@ describe('Stepper', () => {
     ui(<Stepper current={step} />);
     expect(screen.getAllByRole('listitem').map((i) => i.getAttribute('data-state'))).toEqual(states);
   });
-
-  it('renders Arabic labels', () => {
-    ui(<Stepper current="login" />, 'ar');
-    expect(screen.getAllByRole('listitem')[0]).toHaveTextContent('تسجيل الدخول');
-  });
 });
 
 describe('Masthead', () => {
-  it('shows the unaltered Full Stacked negative lockup with an accessible name, and the language toggle', () => {
+  it('shows the unaltered Full Stacked negative lockup with an accessible name, and the portal title', () => {
     ui(<Masthead />);
     const logo = screen.getByRole('img', { name: /KFUPM/ });
     expect(logo).toHaveAttribute('src', '/brand/full-stacked-negative.png');
     expect(logo).toHaveAttribute('width');
     expect(logo).toHaveAttribute('height');
-    expect(screen.getByRole('button', { name: 'العربية' })).toBeInTheDocument();
+    expect(screen.getByText('Pre-Arrival Compliance Portal')).toBeInTheDocument();
+    expect(screen.queryByRole('button')).toBeNull(); // no language switch: the portal is English only
     expect(screen.queryByText(/Dhahran|Onboarding Portal/)).toBeNull(); // the location line is gone
   });
 });
@@ -65,11 +60,11 @@ describe('stylesheets', () => {
     }
   });
 
-  it('uses the generator export unaltered as the page ground, moved (never mirrored) in RTL', () => {
+  it('uses the generator export unaltered as the page ground, never mirrored', () => {
     const shell = css.find(([n]) => n === 'shell.css')![1];
     expect(shell).toContain("url('/brand/matrix/matrix-beige-sand.svg')");
     expect(shell).toMatch(/background-size:\s*cover/);
-    expect(shell).toMatch(/\[dir=['"]?rtl['"]?\][^{]*page-matrix[^{]*\{[^}]*background-position/);
+    expect(shell).not.toMatch(/\[dir=['"]?rtl/); // English only: no right-to-left rules remain
     expect(shell).not.toContain('masthead__matrix'); // the Matrix left the heading
   });
 

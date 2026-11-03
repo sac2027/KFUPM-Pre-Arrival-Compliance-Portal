@@ -2,11 +2,10 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { confirmAllTerms, drawSignature, fillLogin, L, makePng, settleReceipt } from './helpers';
-import type { Locale } from './helpers';
-import { byLocale, STUDENTS } from './students';
+import { STUDENTS } from './students';
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'];
-const GOOD = (l: Locale) => byLocale(l);
+const GOOD = STUDENTS.mai;
 
 async function scan(page: Page, where: string) {
   const r = await new AxeBuilder({ page }).withTags(TAGS).analyze();
@@ -14,10 +13,9 @@ async function scan(page: Page, where: string) {
   expect(found, where).toEqual([]);
 }
 
-for (const locale of ['en', 'ar'] as const) {
-  test(`axe (WCAG 2.2 AA and best practice): every step has no violations (${locale})`, async ({ page }) => {
-    const s = L(locale);
-    await page.addInitScript((l) => localStorage.setItem('pacf.locale', l), locale);
+{
+  test(`axe (WCAG 2.2 AA and best practice): every step has no violations`, async ({ page }) => {
+    const s = L;
     await page.goto('/');
     await page.evaluate(() => document.fonts.ready);
     await scan(page, 'login');
@@ -26,7 +24,7 @@ for (const locale of ['en', 'ar'] as const) {
     await expect(page.locator('.field__error')).toHaveCount(4);
     await scan(page, 'login with errors');
 
-    await fillLogin(page, locale, GOOD(locale));
+    await fillLogin(page, GOOD);
     await page.locator('.term').first().waitFor();
     await page.locator('.term').nth(0).locator('.term__title label').click();
     await scan(page, 'terms (one confirmed)');
@@ -40,13 +38,13 @@ for (const locale of ['en', 'ar'] as const) {
     await expect(page.getByRole('alert')).toBeVisible();
     await scan(page, 'sign (upload with error)');
 
-    await page.getByRole('tab', { name: locale === 'en' ? 'Draw' : 'رسم' }).click();
+    await page.getByRole('tab', { name: 'Draw' }).click();
     await drawSignature(page);
     await page.getByRole('button', { name: s.submit }).click();
     await expect(page.getByRole('heading', { level: 2, name: s.heading })).toBeFocused({ timeout: 8000 });
     await settleReceipt(page);
     await scan(page, 'receipt');
-    await page.getByRole('button', { name: locale === 'en' ? 'Finish and clear my details' : 'إنهاء ومسح بياناتي' }).click();
+    await page.getByRole('button', { name: 'Finish and clear my details' }).click();
     await scan(page, 'receipt (confirming)');
   });
 }
@@ -64,7 +62,6 @@ const focusIsVisible = (page: Page) =>
   });
 
 test('keyboard only: the whole flow can be completed, in a sensible order, with a visible focus at every stop', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('pacf.locale', 'en'));
   await page.goto('/');
   await page.evaluate(() => document.fonts.ready);
   const stops: string[] = [];
@@ -75,18 +72,19 @@ test('keyboard only: the whole flow can be completed, in a sensible order, with 
     stops.push(f.what);
   };
 
-  // Login: skip link, language, then the four fields and the button, in reading order.
-  for (let i = 0; i < 7; i++) await tab();
-  expect(stops.map((s) => s.split(' ').slice(1).join(' '))).toEqual(['Skip to main content', 'العربية', '', '', '', '', 'Sign in']);
+  // Login: skip link, then the four fields (name, email, nationality, passport) and the button, in reading order.
+  for (let i = 0; i < 6; i++) await tab();
+  expect(stops.map((s) => s.split('.')[0])).toEqual(['A', 'INPUT', 'INPUT', 'SELECT', 'INPUT', 'BUTTON']);
   const me = STUDENTS.mai;
-  await page.keyboard.press('Shift+Tab'); // Full name
-  await page.keyboard.type(me.name);
-  await page.keyboard.press('Shift+Tab'); // Email
-  await page.keyboard.type(me.email);
-  await page.keyboard.press('Shift+Tab'); // Phone
-  await page.keyboard.type(me.phone);
   await page.keyboard.press('Shift+Tab'); // Passport
   await page.keyboard.type(me.passport);
+  await page.keyboard.press('Shift+Tab'); // Nationality: typing the country's name picks it
+  await page.keyboard.type('Vietnam');
+  await expect(page.getByLabel('Nationality')).toHaveValue('VN');
+  await page.keyboard.press('Shift+Tab'); // Email
+  await page.keyboard.type(me.email);
+  await page.keyboard.press('Shift+Tab'); // Full name
+  await page.keyboard.type(me.name);
   await page.keyboard.press('Enter'); // submit from inside a field
   await expect(page.locator('#terms-heading')).toBeFocused();
   expect((await focusIsVisible(page)).ok).toBe(true); // the heading we land on shows where we are
@@ -134,17 +132,10 @@ test('the skip link moves the next Tab into the main content', async ({ page }) 
   await expect(page.getByRole('link', { name: 'Skip to main content' })).toBeFocused();
   await page.keyboard.press('Enter');
   await page.keyboard.press('Tab');
-  await expect(page.getByLabel('Passport number')).toBeFocused(); // skipped the masthead's language button
+  await expect(page.getByLabel('Full name')).toBeFocused(); // straight to the first field
 });
 
 test.describe('other guideline checks', () => {
-  test('?lang=ar opens the form in Arabic, and beats a stored English choice', async ({ page }) => {
-    await page.addInitScript(() => localStorage.setItem('pacf.locale', 'en'));
-    await page.goto('/?lang=ar');
-    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
-    await expect(page.getByLabel('رقم جواز السفر')).toBeVisible();
-  });
-
   test('leaving mid-form asks for confirmation on the terms and signature steps, not on the login step', async ({ browser }) => {
     const asked = async (stopAt: 'login' | 'terms') => {
       const ctx = await browser.newContext();
@@ -155,7 +146,7 @@ test.describe('other guideline checks', () => {
         void d.dismiss();
       });
       await page.goto('/');
-      await fillLogin(page, 'en', stopAt === 'login' ? { passport: '', phone: '', email: '', name: '' } : GOOD('en'));
+      await fillLogin(page, stopAt === 'login' ? { name: '', email: '', nationality: '', passport: '' } : GOOD);
       if (stopAt === 'terms') await page.locator('.term').first().waitFor();
       await page.locator('body').click({ position: { x: 5, y: 5 } }); // a user gesture, which browsers require before they will ask
       await page.close({ runBeforeUnload: true });
@@ -169,14 +160,14 @@ test.describe('other guideline checks', () => {
   test('controls opt out of the double-tap delay, but the signature canvas keeps its own touch handling', async ({ page }) => {
     await page.goto('/');
     expect(await page.getByRole('button', { name: 'Sign in' }).evaluate((e) => getComputedStyle(e).touchAction)).toBe('manipulation');
-    await fillLogin(page, 'en', GOOD('en'));
-    await confirmAllTerms(page, 'en');
+    await fillLogin(page, GOOD);
+    await confirmAllTerms(page);
     expect(await page.locator('canvas').evaluate((e) => getComputedStyle(e).touchAction)).toBe('none');
   });
 
   test('names and reference numbers are marked so browser translation leaves them alone', async ({ page }) => {
     await page.goto('/');
-    await fillLogin(page, 'en', GOOD('en'));
+    await fillLogin(page, GOOD);
     await expect(page.locator('.declarant dd').first()).toHaveAttribute('translate', 'no');
     await expect(page.locator('.declarant dd').first()).toHaveAttribute('dir', 'auto');
   });

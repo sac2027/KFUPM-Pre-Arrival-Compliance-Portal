@@ -16,7 +16,7 @@ export const onRequestPost = handle<Env>(async ({ request, env, params }) => {
   const obj = await env.DOCUMENTS.get(row.pdf_key);
   if (!obj) return error(409, 'no_document', 'The document could not be read.');
   const pdf = new Uint8Array(await obj.arrayBuffer());
-  const result = await sendDeclarationEmail(env, { to: row.email, locale: row.locale, fullName: row.full_name, referenceNumber: row.reference_number, submittedAt: row.submitted_at, pdf, submissionId: id });
+  const result = await sendDeclarationEmail(env, { to: row.email, fullName: row.full_name, referenceNumber: row.reference_number, submittedAt: row.submitted_at, pdf, submissionId: id });
   await env.RECORDS.prepare('UPDATE submissions SET email_status = ?, email_message_id = ?, email_error = ?, email_sent_at = ? WHERE id = ?')
     .bind(result.status, result.status === 'sent' ? result.messageId : null, result.status === 'failed' ? result.error : null, result.status === 'failed' ? null : new Date().toISOString(), id)
     .run();

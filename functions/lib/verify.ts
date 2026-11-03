@@ -1,8 +1,7 @@
-import { namesMatch, normaliseEmail, normalisePassport, normalisePhone } from './match';
+import { namesMatch, normaliseEmail, normalisePassport } from './match';
 
 export interface VerifyInput {
   passport: string;
-  phone: string;
   name: string;
   email: string;
 }
@@ -10,7 +9,6 @@ export interface VerifyInput {
 export interface RosterRow {
   passport_number: string;
   full_name: string;
-  phone_e164: string;
   email: string;
   status: 'active' | 'withdrawn';
 }
@@ -21,21 +19,19 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export function parseVerifyBody(body: unknown): VerifyInput | null {
   if (!body || typeof body !== 'object') return null;
   const b = body as Record<string, unknown>;
-  if ([b.passportNumber, b.phoneNumber, b.fullName, b.email].some((v) => typeof v !== 'string')) return null;
+  if ([b.passportNumber, b.fullName, b.email].some((v) => typeof v !== 'string')) return null;
   const passport = normalisePassport(b.passportNumber as string);
-  const phone = normalisePhone(b.phoneNumber as string);
   const name = (b.fullName as string).normalize('NFKC').replace(/\s+/g, ' ').trim().toLowerCase();
   const email = normaliseEmail(b.email as string);
-  if (!/^[A-Z0-9]{5,20}$/.test(passport) || !phone || name.length < 2 || name.length > 200 || !EMAIL.test(email) || email.length > 254) return null;
-  return { passport, phone, name, email };
+  if (!/^[A-Z0-9]{5,20}$/.test(passport) || name.length < 2 || name.length > 200 || !EMAIL.test(email) || email.length > 254) return null;
+  return { passport, name, email };
 }
 
-/** All four factors must agree with an active roster row. Name is compared loosely (see match.ts). */
+/** Passport, email and name must all agree with an active roster row. Name is compared loosely (see match.ts). */
 export function matchStudent(typed: VerifyInput, roster: RosterRow | null): boolean {
   if (!roster || roster.status !== 'active') return false;
   return (
     normalisePassport(roster.passport_number) === typed.passport &&
-    normalisePhone(roster.phone_e164) === typed.phone &&
     normaliseEmail(roster.email) === typed.email &&
     namesMatch(typed.name, roster.full_name)
   );

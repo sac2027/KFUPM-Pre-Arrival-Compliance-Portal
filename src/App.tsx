@@ -117,7 +117,6 @@ function Shell() {
                   onSubmit={async (signature) => {
                     const receipt = await dbService.submitCompliance({
                       session: flow.session!,
-                      locale,
                       documentRef: "KFUPM-INTL-PACF",
                       acceptedTermIds: flow.acceptedTermIds,
                       signature,

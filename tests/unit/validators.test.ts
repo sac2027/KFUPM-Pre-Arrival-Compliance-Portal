@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 import { describe, expect, it } from 'vitest';
 import { normaliseDigits, stripInvisible } from '../../src/lib/normalise';
-import { emailSchema, loginSchema, nameSchema, passportSchema, phoneSchema } from '../../src/lib/validators';
+import { emailSchema, loginSchema, nameSchema, nationalitySchema, passportSchema } from '../../src/lib/validators';
 
 const ok = (schema: v.GenericSchema, input: unknown) => v.safeParse(schema, input).success;
 const out = (schema: v.GenericSchema, input: unknown) => (v.parse(schema, input) as string);
@@ -31,19 +31,9 @@ describe('passport', () => {
   it('reports empty as required', () => expect(msg(passportSchema, '  ')).toBe('error.required'));
 });
 
-describe('phone', () => {
-  it.each(['+966 55 123 4567', '+44 7700 900123', '00966 55 123 4567', '+44 (0) 7700 900123', '+٩٦٦ ٥٥ ١٢٣ ٤٥٦٧'])('accepts %s', (p) => expect(ok(phoneSchema, p)).toBe(true));
-  it('explains the missing country code separately from other mistakes', () => {
-    expect(msg(phoneSchema, '0551234567')).toBe('error.phone.countryCode');
-    expect(msg(phoneSchema, '(055) 123-4567')).toBe('error.phone.countryCode');
-  });
-  it('normalises to an optional + and ASCII digits only', () => {
-    expect(out(phoneSchema, '+966 55 123 4567')).toBe('+966551234567');
-    expect(out(phoneSchema, '+٩٦٦ ٥٥ ١٢٣ ٤٥٦٧')).toBe('+966551234567');
-    expect(out(phoneSchema, '00966 55 123 4567')).toBe('+966551234567');
-  });
-  it.each(['abc', '+1234567890123456', '55+1234567', '++96655123', '+1234567'])('rejects %s', (p) => expect(msg(phoneSchema, p)).toBe('error.phone'));
-  it('reports empty as required', () => expect(msg(phoneSchema, '')).toBe('error.required'));
+describe('nationality', () => {
+  it.each(['VN', 'SA', 'TN', 'GB'])('accepts the code %s', (c) => expect(ok(nationalitySchema, c)).toBe(true));
+  it.each(['', 'XX', 'vn', 'Vietnam', 'USA'])('rejects %j with the nationality message', (c) => expect(msg(nationalitySchema, c)).toBe('error.nationality'));
 });
 
 describe('email', () => {
@@ -92,12 +82,12 @@ describe('names that real students have (break-ui)', () => {
 });
 
 describe('loginSchema', () => {
-  it('returns normalised values for all three fields', () => {
-    expect(v.parse(loginSchema, { passportNumber: 'a1234567', phoneNumber: '+966 55 123 4567', email: ' M@Example.com', fullName: ' محمد  عبدالله ' })).toEqual({
-      passportNumber: 'A1234567',
-      phoneNumber: '+966551234567',
-      email: 'm@example.com',
-      fullName: 'محمد عبدالله',
-    });
+  it('returns normalised values for all four fields, in form order', () => {
+    const out = v.parse(loginSchema, { fullName: ' محمد  عبدالله ', email: ' M@Example.com', nationality: 'SA', passportNumber: 'a1234567' });
+    expect(out).toEqual({ fullName: 'محمد عبدالله', email: 'm@example.com', nationality: 'SA', passportNumber: 'A1234567' });
+    expect(Object.keys(out)).toEqual(['fullName', 'email', 'nationality', 'passportNumber']);
+  });
+  it('has no phone field', () => {
+    expect(Object.keys(loginSchema.entries)).not.toContain('phoneNumber');
   });
 });

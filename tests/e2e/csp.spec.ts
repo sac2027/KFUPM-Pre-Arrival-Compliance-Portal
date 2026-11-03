@@ -9,7 +9,7 @@ const CSP = /Content-Security-Policy:\s*(.+)/.exec(HEADERS)![1]!.trim();
 
 test('the whole flow runs under the production CSP with no violations and no console errors', async ({ page }, info) => {
   test.skip(info.project.name !== 'desktop-1280', 'the policy does not depend on the viewport');
-  const s = L('en');
+  const s = L;
   const problems: string[] = [];
 
   // `vite preview` does not read _headers, so add the policy the way Cloudflare will.
@@ -28,9 +28,9 @@ test('the whole flow runs under the production CSP with no violations and no con
 
   await page.goto('/');
   await page.evaluate(() => document.fonts.ready);
-  await fillLogin(page, 'en', STUDENTS.mai);
+  await fillLogin(page, STUDENTS.mai);
   await expect(page.locator('#terms-heading')).toBeFocused();
-  await confirmAllTerms(page, 'en');
+  await confirmAllTerms(page);
 
   await drawSignature(page); // canvas + signature_pad
   await page.getByRole('tab', { name: 'Upload' }).click(); // data: URL preview under img-src

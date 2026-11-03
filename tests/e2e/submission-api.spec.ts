@@ -6,10 +6,10 @@ import { STUDENTS } from './students';
 const onlyDesktop = (info: { project: { name: string } }) => test.skip(info.project.name !== 'desktop-1280', 'not viewport dependent');
 const PNG = `data:image/png;base64,${Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]).toString('base64')}`;
 const TERMS = ['saudi-laws', 'cultural-norms', 'university-policies', 'representation', 'reporting'];
-const body = (over: Record<string, unknown> = {}) => ({ locale: 'en', acceptedTermIds: TERMS, signature: { method: 'draw', dataUrl: PNG }, ...over });
+const body = (over: Record<string, unknown> = {}) => ({ nationality: 'SA', acceptedTermIds: TERMS, signature: { method: 'draw', dataUrl: PNG }, ...over });
 
 async function token(request: APIRequestContext, who = STUDENTS.eyad): Promise<string> {
-  const res = await request.post('/api/verify', { data: { passportNumber: who.passport, phoneNumber: who.phone, fullName: who.name, email: who.email } });
+  const res = await request.post('/api/verify', { data: { passportNumber: who.passport, fullName: who.name, email: who.email } });
   expect(res.status()).toBe(200);
   return (await res.json()).token as string;
 }
@@ -38,6 +38,8 @@ test.describe('POST /api/submissions', () => {
     expect(row.full_name).toBe('Eyad Salem'); // from the roster, not the request
     expect(row.email).toBe(STUDENTS.eyad.email);
     expect(row.passport_last4).toBe('0001');
+    expect(row.nationality).toBe('Saudi Arabia'); // the code the form sent, stored as the country name
+    expect(row).not.toHaveProperty('phone_e164'); // no phone number is collected
     expect(JSON.stringify(row)).not.toContain(STUDENTS.eyad.passport); // never the full number
     expect(row.accepted_term_ids).toBe(JSON.stringify(TERMS));
     expect(row.signature_key).toBe(`submissions/${id}/signature.png`);
@@ -47,7 +49,7 @@ test.describe('POST /api/submissions', () => {
     expect(again.status()).toBe(409);
   });
 
-  test('refuses without a session, with a tampered token, with four terms, and with an SVG', async ({ request }, info) => {
+  test('refuses without a session, with a tampered token, with four terms, with an SVG, and without a valid nationality', async ({ request }, info) => {
     onlyDesktop(info);
     expect((await request.post('/api/submissions', { data: body() })).status()).toBe(401);
     const t = await token(request, STUDENTS.anas);
@@ -57,6 +59,11 @@ test.describe('POST /api/submissions', () => {
     expect((await four.json()).code).toBe('invalid_submission');
     const svg = await request.post('/api/submissions', { headers: { authorization: `Bearer ${t}` }, data: body({ signature: { method: 'upload', dataUrl: 'data:image/svg+xml;base64,PHN2Zz4=' } }) });
     expect(svg.status()).toBe(400);
+    for (const nationality of [undefined, '', 'XX', 'Saudi Arabia']) {
+      const bad = await request.post('/api/submissions', { headers: { authorization: `Bearer ${t}` }, data: body({ nationality }) });
+      expect(bad.status(), String(nationality)).toBe(400);
+      expect((await bad.json()).message).toMatch(/nationality/);
+    }
     // the session is still unused after rejected attempts, so a correct submission now succeeds
     expect((await request.post('/api/submissions', { headers: { authorization: `Bearer ${t}` }, data: body() })).status()).toBe(201);
   });

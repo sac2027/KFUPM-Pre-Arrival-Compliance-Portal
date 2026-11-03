@@ -2,11 +2,10 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { confirmAllTerms, drawSignature, fillLogin, L } from './helpers';
-import type { Locale } from './helpers';
-import { byLocale } from './students';
+import { STUDENTS } from './students';
 
-const NETWORK: Record<Locale, RegExp> = { en: /Can’t reach the server/, ar: /تعذّر الاتصال بالخادم/ };
-const GOOD = (l: Locale) => byLocale(l);
+const NETWORK = /Can’t reach the server/;
+const GOOD = STUDENTS.mai;
 const inkPixels = (page: Page) =>
   page.evaluate(() => {
     const c = document.querySelector('canvas')!;
@@ -16,16 +15,15 @@ const inkPixels = (page: Page) =>
     return n;
   });
 
-for (const locale of ['en', 'ar'] as const) {
-  const s = L(locale);
+{
+  const s = L;
 
-  test(`a failed sign-in explains itself, keeps the form filled, and a retry succeeds (${locale})`, async ({ page }) => {
-    await page.addInitScript((l) => localStorage.setItem('pacf.locale', l), locale);
+  test(`a failed sign-in explains itself, keeps the form filled, and a retry succeeds`, async ({ page }) => {
     await page.goto('/?fail=login');
-    await fillLogin(page, locale, GOOD(locale));
-    await expect(page.getByRole('alert')).toContainText(NETWORK[locale]);
-    await expect(page.getByLabel(s.name)).toHaveValue(GOOD(locale).name);
-    await expect(page.getByLabel(s.passport)).toHaveValue(GOOD(locale).passport);
+    await fillLogin(page, GOOD);
+    await expect(page.getByRole('alert')).toContainText(NETWORK);
+    await expect(page.getByLabel(s.name)).toHaveValue(GOOD.name);
+    await expect(page.getByLabel(s.passport)).toHaveValue(GOOD.passport);
     await expect(page.locator('#login-heading')).toBeVisible(); // still on the login step
 
     await page.getByRole('button', { name: s.signin }).click(); // retry
@@ -33,16 +31,15 @@ for (const locale of ['en', 'ar'] as const) {
     await expect(page.getByRole('alert')).toHaveCount(0);
   });
 
-  test(`a failed submission keeps the signature, shows a retry message, and the retry succeeds once (${locale})`, async ({ page }) => {
-    await page.addInitScript((l) => localStorage.setItem('pacf.locale', l), locale);
+  test(`a failed submission keeps the signature, shows a retry message, and the retry succeeds once`, async ({ page }) => {
     await page.goto('/?fail=submit');
-    await fillLogin(page, locale, GOOD(locale));
-    await confirmAllTerms(page, locale);
+    await fillLogin(page, GOOD);
+    await confirmAllTerms(page);
     await drawSignature(page);
     const inkBefore = await inkPixels(page);
     await page.getByRole('button', { name: s.submit }).click();
 
-    await expect(page.getByRole('alert')).toContainText(NETWORK[locale]);
+    await expect(page.getByRole('alert')).toContainText(NETWORK);
     await expect(page.locator('#sign-heading')).toBeVisible(); // not lost: still on the signature step
     expect(await inkPixels(page)).toBe(inkBefore); // the drawing is untouched
     await expect(page.getByRole('button', { name: s.submit })).not.toHaveAttribute('aria-disabled', 'true');

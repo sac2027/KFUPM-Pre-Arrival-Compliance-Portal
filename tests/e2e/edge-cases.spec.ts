@@ -2,11 +2,9 @@
 import { execFileSync } from 'node:child_process';
 import { expect, test } from '@playwright/test';
 import { clipped, confirmAllTerms, drawSignature, fillLogin, L, makePng, overflow, settleReceipt } from './helpers';
-import type { Locale } from './helpers';
-import { byLocale, STUDENTS } from './students';
+import { STUDENTS } from './students';
 
-const open = async (page: import('@playwright/test').Page, locale: Locale) => {
-  await page.addInitScript((l) => localStorage.setItem('pacf.locale', l), locale);
+const open = async (page: import('@playwright/test').Page) => {
   await page.goto('/');
   await page.evaluate(() => document.fonts.ready);
 };
@@ -14,28 +12,28 @@ const GOOD = STUDENTS.mai;
 
 test.describe('names that real students have', () => {
   test('the declaration shows the name as KFUPM holds it, however the student typed it', async ({ page }) => {
-    await open(page, 'en');
-    await fillLogin(page, 'en', { ...STUDENTS.mai, name: '  mai   NGUYEN ' }); // roster: Nguyen Thi Mai
+    await open(page);
+    await fillLogin(page, { ...STUDENTS.mai, name: '  mai   NGUYEN ' }); // roster: Nguyen Thi Mai
     await expect(page.locator('#terms-heading')).toBeFocused();
     expect(await page.locator('.declarant dd').first().textContent()).toBe('Nguyen Thi Mai');
   });
 
   test('a name in a different order still verifies (roster "Nguyen Thi Mai", typed "Mai Nguyễn")', async ({ page }) => {
-    await open(page, 'en');
-    await fillLogin(page, 'en', STUDENTS.mai);
+    await open(page);
+    await fillLogin(page, STUDENTS.mai);
     await expect(page.locator('#terms-heading')).toBeFocused();
   });
 
   test('a transliterated name with middle dots passes the form and gets the generic answer from the server', async ({ page }) => {
-    await open(page, 'en');
-    await fillLogin(page, 'en', { ...GOOD, name: '阿卜杜拉·本·穆罕默德' });
+    await open(page);
+    await fillLogin(page, { ...GOOD, name: '阿卜杜拉·本·穆罕默德' });
     await expect(page.locator('#full-name-error')).toHaveCount(0); // the form accepted it
     await expect(page.getByRole('alert')).toContainText('do not match our records'); // the roster did not
   });
 
   test('an emoji name is refused with a clear message instead of being mangled', async ({ page }) => {
-    await open(page, 'en');
-    await fillLogin(page, 'en', { ...GOOD, name: '🦊 Fox' });
+    await open(page);
+    await fillLogin(page, { ...GOOD, name: '🦊 Fox' });
     await expect(page.locator('#full-name-error')).toContainText('2–100 letters');
     await expect(page.locator('#login-heading')).toBeVisible();
   });
@@ -43,17 +41,17 @@ test.describe('names that real students have', () => {
   test('a withdrawn student gets the same generic answer as a stranger', async ({ page }) => {
     // This passport only ever fails, so give it a fresh failure budget (the throttle is tested in verify-api.spec.ts).
     execFileSync('npx', ['wrangler', 'd1', 'execute', 'pacf-records', '--local', '--command', `DELETE FROM verify_attempts WHERE key = 'p:${STUDENTS.withdrawn.passport}'`], { stdio: 'pipe', env: { ...process.env, WRANGLER_SEND_METRICS: 'false' } });
-    await open(page, 'en');
-    await fillLogin(page, 'en', STUDENTS.withdrawn);
+    await open(page);
+    await fillLogin(page, STUDENTS.withdrawn);
     await expect(page.getByRole('alert')).toContainText('do not match our records');
   });
 });
 
 test.describe('uploaded signature images', () => {
   const toUpload = async (page: import('@playwright/test').Page) => {
-    await open(page, 'en');
-    await fillLogin(page, 'en', STUDENTS.mai);
-    await confirmAllTerms(page, 'en');
+    await open(page);
+    await fillLogin(page, STUDENTS.mai);
+    await confirmAllTerms(page);
     await page.getByRole('tab', { name: 'Upload' }).click();
   };
   const upload = async (page: import('@playwright/test').Page, o: Parameters<typeof makePng>[1]) => {
@@ -107,14 +105,14 @@ test.describe('uploaded signature images', () => {
 test.describe('environments', () => {
   test('forced-colours (high contrast): progress, the checked box and the buttons still show their state', async ({ page }) => {
     await page.emulateMedia({ forcedColors: 'active' });
-    await open(page, 'en');
+    await open(page);
     const bg = (sel: string) => page.locator(sel).first().evaluate((e) => getComputedStyle(e, '::before').backgroundColor);
     const current = await bg('.stepper__item[data-state="current"]');
     const upcoming = await bg('.stepper__item[data-state="upcoming"]');
     expect(current).not.toBe(upcoming);
     for (const c of [current, upcoming]) expect(c).not.toBe('rgba(0, 0, 0, 0)');
 
-    await fillLogin(page, 'en', STUDENTS.mai);
+    await fillLogin(page, STUDENTS.mai);
     await page.locator('.term').first().waitFor();
     const box = (i: number) => page.locator('.term__box').nth(i).evaluate((e) => getComputedStyle(e).backgroundColor);
     const before = await box(0);
@@ -129,18 +127,17 @@ test.describe('environments', () => {
 
   test.describe('without JavaScript', () => {
     test.use({ javaScriptEnabled: false });
-    test('says what is wrong, in both languages, instead of showing a blank page', async ({ page }) => {
+    test('says what is wrong instead of showing a blank page', async ({ page }) => {
       await page.goto('/');
       // Playwright's text locators deliberately skip <noscript>, so address the block by CSS.
       await expect(page.locator('.noscript')).toBeVisible();
       await expect(page.locator('.noscript p').first()).toContainText('This form needs JavaScript');
-      await expect(page.locator('.noscript p[lang="ar"]')).toContainText('يحتاج هذا النموذج إلى تفعيل جافاسكربت');
     });
   });
 
-  for (const locale of ['en', 'ar'] as const) {
-    test(`text enlarged to 200%: every step still fits with nothing clipped (${locale})`, async ({ page }) => {
-      await open(page, locale);
+  {
+    test('text enlarged to 200%: every step still fits with nothing clipped', async ({ page }) => {
+      await open(page);
       // Through the CSSOM (what a browser's text-size setting does); an injected <style> would be blocked by the site's own CSP.
       await page.evaluate(() => {
         document.documentElement.style.fontSize = '200%';
@@ -150,14 +147,14 @@ test.describe('environments', () => {
         expect(await clipped(page), `${where}: clipped`).toEqual([]);
       };
       await fits('login');
-      await fillLogin(page, locale, byLocale(locale));
+      await fillLogin(page, STUDENTS.mai);
       await expect(page.locator('#terms-heading')).toBeFocused();
       await fits('terms');
-      await confirmAllTerms(page, locale);
+      await confirmAllTerms(page);
       await fits('sign');
       await drawSignature(page);
-      await page.getByRole('button', { name: L(locale).submit }).click();
-      await expect(page.getByRole('heading', { level: 2, name: L(locale).heading })).toBeFocused({ timeout: 8000 });
+      await page.getByRole('button', { name: L.submit }).click();
+      await expect(page.getByRole('heading', { level: 2, name: L.heading })).toBeFocused({ timeout: 8000 });
       await settleReceipt(page);
       await fits('receipt');
     });

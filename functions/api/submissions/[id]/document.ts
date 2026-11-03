@@ -43,7 +43,7 @@ export const onRequestPut = handle<Env>(async ({ request, env, params }) => {
   const receivedAt = new Date().toISOString();
   await env.RECORDS.prepare('UPDATE submissions SET pdf_key = ?, pdf_sha256 = ?, pdf_bytes = ?, document_received_at = ? WHERE id = ?').bind(key, sha, bytes.length, receivedAt, id).run();
 
-  const result = await sendDeclarationEmail(env, { to: row.email, locale: row.locale, fullName: row.full_name, referenceNumber: row.reference_number, submittedAt: row.submitted_at, pdf: bytes, submissionId: id });
+  const result = await sendDeclarationEmail(env, { to: row.email, fullName: row.full_name, referenceNumber: row.reference_number, submittedAt: row.submitted_at, pdf: bytes, submissionId: id });
   await env.RECORDS.prepare('UPDATE submissions SET email_status = ?, email_message_id = ?, email_error = ?, email_sent_at = ? WHERE id = ?')
     .bind(result.status, result.status === 'sent' ? result.messageId : null, result.status === 'failed' ? result.error : null, result.status === 'failed' ? null : receivedAt, id)
     .run();
